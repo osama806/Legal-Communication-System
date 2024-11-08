@@ -3,19 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use App\Traits\AuthenticatableUser;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use AuthenticatableUser;
 
     /**
      * The attributes that are mass assignable.
@@ -39,34 +34,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->morphOne(Role::class, 'rolable');
     }
 
-    public function messages(): MorphMany
+    public function hasRole(string $roleName): bool
     {
-        return $this->morphMany(Message::class, 'messagable');
-    }
-
-    public function chats(): HasMany
-    {
-        return $this->hasMany(Chat::class);
-    }
-
-    public function attachments(): MorphMany
-    {
-        return $this->morphMany(Attachment::class, 'attachmentable');
-    }
-
-    public function agencies(): HasMany
-    {
-        return $this->hasMany(Agency::class);
-    }
-
-    public function rates(): HasMany
-    {
-        return $this->hasMany(Rate::class);
-    }
-
-    public function issues(): HasMany
-    {
-        return $this->hasMany(Issue::class);
+        return $this->role && $this->role->name === $roleName;
     }
 
     /**
@@ -88,23 +58,4 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * Get the identifier that will be stored in the JWT claim.
-     *
-     * @return mixed
-     */
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    /**
-     * Return a key-value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
 }

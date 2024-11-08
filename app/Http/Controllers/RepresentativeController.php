@@ -2,48 +2,80 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
+use App\Http\Resources\RepresentativeResource;
 use App\Models\Representative;
+use App\Services\Representative\RepresentativeService;
+use App\Traits\ResponseTrait;
+use Auth;
 use Illuminate\Http\Request;
 
 class RepresentativeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use ResponseTrait;
+
+    protected $representativeService;
+    public function __construct(RepresentativeService $representativeService)
+    {
+        $this->representativeService = $representativeService;
+    }
+
+    public function login(LoginRequest $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (!$token = Auth::guard('representative')->attempt($credentials)) {
+            return $this->getResponse('error', 'Email or password is incorrect!', 401);
+        }
+
+        return $this->getResponse('token', $token, 201);
+    }
+
+    public function logout()
+    {
+        Auth::guard('representative')->logout();
+        return $this->getResponse('msg', 'Successfully logged out', 200);
+    }
+
     public function index()
     {
-        //
+        $representatives = Representative::all();
+        return $this->getResponse("representatives", RepresentativeResource::collection($representatives), 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show($id)
     {
-        //
+        $representative = Representative::find($id);
+        if (!$representative) {
+            return $this->getResponse("error", "Representative Not Found", 404);
+        }
+        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Representative $representative)
+    public function updateByEmployee(UpdateRepresentativeInfoRequest $updateRepresentativeRequest, $id)
     {
-        //
+        $representative = Representative::find($id);
+        if (!$representative) {
+            return $this->getResponse('error', 'Representative Not Found!', 404);
+        }
+
+        $response = $this->representativeService->update($updateRepresentativeRequest->validated(), $representative);
+        return $response['status']
+            ? $this->getResponse("msg", "Representative updated profile successfully", 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Representative $representative)
+    public function destroyByEmployee($id)
     {
-        //
-    }
+        $representative = Representative::find($id);
+        if (!$representative) {
+            return $this->getResponse('error', 'Representative Not Found!', 404);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Representative $representative)
-    {
-        //
+        $response = $this->representativeService->destroy($representative);
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

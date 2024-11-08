@@ -3,123 +3,125 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\AuthService;
-use Illuminate\Http\Request;
 use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Employee\UpdateUserInfoRequest;
+use App\Http\Requests\User\RegisterUserRequest;
+use App\Http\Resources\UserResource;
+use App\Models\User;
+use App\Services\User\UserService;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Traits\ResponseTrait;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Auth;
+use Hash;
 
 class UserController extends Controller
 {
     use ResponseTrait;
-    protected $authService;
+    protected $userService;
 
-    /**
-     * Create a new class instance.
-     * @param \App\Services\AuthService $authService
-     */
-    public function __construct(AuthService $authService)
+    public function __construct(UserService $userService)
     {
-        $this->authService = $authService;
+        $this->userService = $userService;
     }
 
-    /**
-     * Create a new user in storage.
-     * @param \App\Http\Requests\Auth\RegisterRequest $registerRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function register(RegisterRequest $registerRequest)
+    public function login(LoginRequest $request)
     {
-        $validatedData = $registerRequest->validated();
-        $response = $this->authService->register($validatedData);
-        return $response['status']
-            ? $this->getResponse("msg", "User registered successfully", 201)
-            : $this->getResponse("msg", $response['msg'], $response['code']);
+        $credentials = $request->only('email', 'password');
+
+        if (!$token = Auth::guard('api')->attempt($credentials)) {
+            return $this->getResponse('error', 'Email or password is incorrect!', 401);
+        }
+
+        return $this->getResponse('token', $token, 201);
     }
 
-    /**
-     * Check if user authorize or unAuthorize
-     * @param \App\Http\Requests\Auth\LoginRequest $authRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function login(LoginRequest $authRequest)
-    {
-        $validatedData = $authRequest->validated();
-        $response = $this->authService->login($validatedData);
-        return $response['status']
-            ? $this->getResponse("token", $response['token'], 201)
-            : $this->getResponse("msg", $response['msg'], $response['code']);
-    }
-
-    /**
-     * To make logout for user if be authorize
-     * @throws \Tymon\JWTAuth\Exceptions\JWTException
-     * @return \Illuminate\Http\Response
-     */
     public function logout()
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::parseToken());
-            return $this->getResponse("msg", "User logged out successfully", 200);
-        } catch (JWTException $e) {
-            // throw new JWTException("Failed to logout, please try again", 500);
-            return $this->getResponse("msg", "Failed to logout, please try again", 500);
-        }
+        Auth::guard('api')->logout();
+        return $this->getResponse('msg', 'Successfully logged out', 200);
     }
 
-    /**
-     * Change password
-     * @param \App\Http\Requests\Auth\ChangePasswordFormRequest $changePasswordFormRequest
-     * @return \Illuminate\Http\Response
-     */
     public function changePassword(ChangePasswordFormRequest $changePasswordFormRequest)
     {
+        $user = Auth::user();
         $validatedData = $changePasswordFormRequest->validated();
-        $response = $this->authService->changePassword($validatedData);
+
+        // Check if the current password matches
+        if (!Hash::check($validatedData['current_password'], $user->password)) {
+            return $this->getResponse('error', 'The current password is incorrect.', 400);
+        }
+
+        // Update the user's password
+        $user->password = Hash::make($validatedData['new_password']);
+        $user->save();
+        return $this->getResponse('msg', 'Changed password successfully', 200);
+    }
+
+    public function index()
+    {
+        $users = User::all();
+        return $this->getResponse("users", UserResource::collection($users), 200);
+    }
+
+    public function store(RegisterUserRequest $registerUserRequest)
+    {
+        $response = $this->userService->register($registerUserRequest->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Changed password successfully', 200)
+            ? $this->getResponse("msg", "User registered successfully", 201)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    public function show($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return $this->getResponse('error', 'User Not Found', 404);
+        }
+        return $this->getResponse("profile", new UserResource($user), 200);
+    }
+
+    public function update(UpdateProfileRequest $updateProfileRequest)
+    {
+        $response = $this->userService->updateProfile($updateProfileRequest->validated());
+        return $response['status']
+            ? $this->getResponse("msg", "User updated profile successfully", 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    public function destroy()
+    {
+        $response = $this->userService->deleteAccount();
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
-    /**
-     * Get user profile data
-     * @return \Illuminate\Http\Response
-     */
-    public function show()
+    public function updateByEmployee(UpdateUserInfoRequest $updateUserInfoRequest, $id)
     {
-        $response = $this->authService->show();
-        return $response['status']
-            ? $this->getResponse("profile", $response['profile'], 200)
-            : $this->getResponse("msg", "There is error in server", 500);
-    }
+        $user = User::find($id);
+        if (!$user) {
+            return $this->getResponse('error', 'User Not Found!', 404);
+        }
+       
 
-    /**
-     * Update user profile in storage
-     * @param \App\Http\Requests\Auth\UpdateProfileRequest $updateProfileRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function updateProfile(UpdateProfileRequest $updateProfileRequest)
-    {
-        $validatedData = $updateProfileRequest->validated();
-        $response = $this->authService->updateProfile($validatedData);
+        $response = $this->userService->updateUserProfileByEmployee($updateUserInfoRequest->validated(), $user);
         return $response['status']
             ? $this->getResponse("msg", "User updated profile successfully", 200)
-            : $this->getResponse("msg", $response['msg'], $response['code']);
+            : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
-    /**
-     * Delete user from storage.
-     * @return \Illuminate\Http\Response
-     */
-    public function deleteUser()
+    public function destroyByEmployee($id)
     {
-        $response = $this->authService->deleteUser();
+        $user = User::find($id);
+        if (!$user) {
+            return $this->getResponse('error', 'User Not Found!', 404);
+        }
+
+        $response = $this->userService->deleteUserAccountByEmployee($user);
         return $response['status']
-            ? $this->getResponse("msg", "Deleted user successfully", 200)
-            : $this->getResponse("msg", $response['msg'], $response['code']);
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
+
 }

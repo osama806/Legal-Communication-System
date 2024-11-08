@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Employee;
 
 use App\Traits\ResponseTrait;
 use Auth;
@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class UpdateProfileRequest extends FormRequest
+class UpdateUserInfoRequest extends FormRequest
 {
     use ResponseTrait;
 
@@ -18,7 +18,13 @@ class UpdateProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = Auth::user();
+        return Auth::check() && $user->hasRole('employee');
+    }
+
+    public function failedAuthorization()
+    {
+        throw new HttpResponseException($this->getResponse("error", "This action is unauthorized.", 422));
     }
 
     /**

@@ -17,18 +17,12 @@ class ChangePasswordFormRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && Auth::user()->role->name === 'user';
     }
 
-    /**
-     * Failed Authorization
-     * @throws \Illuminate\Http\Exceptions\HttpResponseException
-     * @return never
-     */
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->getResponse("error", "This action is unauthorized.", 422));
-
+        throw new HttpResponseException($this->getResponse('error', 'This action is unauthorized', 422));
     }
 
     /**

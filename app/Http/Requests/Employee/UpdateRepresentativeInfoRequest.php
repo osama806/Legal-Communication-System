@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Employee;
 
 use App\Traits\ResponseTrait;
 use Auth;
@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class UpdateProfileRequest extends FormRequest
+class UpdateRepresentativeInfoRequest extends FormRequest
 {
     use ResponseTrait;
 
@@ -18,7 +18,13 @@ class UpdateProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = Auth::user();
+        return Auth::check() && $user->hasRole('employee');
+    }
+
+    public function failedAuthorization()
+    {
+        throw new HttpResponseException($this->getResponse("error", "This action is unauthorized.", 422));
     }
 
     /**
@@ -31,9 +37,8 @@ class UpdateProfileRequest extends FormRequest
         return [
             'name' => 'nullable|string|min:3|max:50',
             'address' => 'nullable|string|min:5|max:100',
-            'birthdate' => 'nullable|date|date_format:Y-m-d',
-            'birth_place' => 'nullable|string|min:3|max:100',
-            'phone' => 'nullable|digits:10|unique:users,phone',
+            'union_branch' => 'nullable|string|max:100',
+            'union_number' => 'nullable|digits:8|unique:representatives,union_number',
         ];
     }
 
@@ -57,9 +62,8 @@ class UpdateProfileRequest extends FormRequest
         return [
             "name" => "Full name",
             'address' => 'Address',
-            'birthdate' => 'Birth date',
-            'birth_place' => 'Birth place',
-            'phone' => 'Phone number',
+            'union_branch' => 'Union branch',
+            'union_number' => 'Union number',
         ];
     }
 
@@ -74,7 +78,6 @@ class UpdateProfileRequest extends FormRequest
             'min' => ':attribute must be at least :min characters long.',
             'max' => ':attribute must be at maximum :max characters.',
             'unique' => 'This :attribute is already registered.',
-            'date' => 'The :attribute must be a valid date format.'
         ];
     }
 }

@@ -2,48 +2,79 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
+use App\Http\Resources\LawyerResource;
 use App\Models\Lawyer;
+use App\Services\Lawyer\LawyerService;
+use App\Traits\ResponseTrait;
+use Auth;
 use Illuminate\Http\Request;
 
 class LawyerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use ResponseTrait;
+
+    protected $lawyerService;
+    public function __construct(LawyerService $lawyerService)
+    {
+        $this->lawyerService = $lawyerService;
+    }
+
+    public function login(LoginRequest $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (!$token = Auth::guard('lawyer')->attempt($credentials)) {
+            return $this->getResponse('error', 'Email or password is incorrect!', 401);
+        }
+
+        return $this->getResponse('token', $token, 201);
+    }
+
+    public function logout()
+    {
+        Auth::guard('lawyer')->logout();
+        return $this->getResponse('msg', 'Successfully logged out', 200);
+    }
+
     public function index()
     {
-        //
+        $lawyers = Lawyer::all();
+        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show($id)
     {
-        //
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse("error", "Lawyer Not Found!", 404);
+        }
+        return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Lawyer $lawyer)
+    public function updateByEmployee(UpdateLawyerInfoRequest $updateLawyerRequest, $id)
     {
-        //
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+        }
+        $response = $this->lawyerService->update($updateLawyerRequest->validated(), $lawyer);
+        return $response['status']
+            ? $this->getResponse("msg", "Lawyer updated profile successfully", 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Lawyer $lawyer)
+    public function destroyByEmployee($id)
     {
-        //
-    }
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Lawyer $lawyer)
-    {
-        //
+        $response = $this->lawyerService->destroy($lawyer);
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

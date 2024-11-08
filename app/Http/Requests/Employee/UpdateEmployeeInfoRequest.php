@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Employee;
 
 use App\Traits\ResponseTrait;
-use Illuminate\Foundation\Http\FormRequest;
+use Auth;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Hash;
 
-class RegisterRequest extends FormRequest
+class UpdateEmployeeInfoRequest extends FormRequest
 {
     use ResponseTrait;
 
@@ -17,9 +17,8 @@ class RegisterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::check() && Auth::user()->role->name === 'employee';
     }
-
 
     /**
      * Get the validation rules that apply to the request.
@@ -28,15 +27,12 @@ class RegisterRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|string|min:3|max:50',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|confirmed|min:8',
-            'address' => 'required|string|min:5|max:100',
-            'birthdate' => 'required|date|date_format:Y-m-d',
-            'birth_place' => 'required|string|min:3|max:100',
-            'national_number' => 'required|digits:11|unique:users,national_number',
-            'gender' => 'required|string|in:male,female',
-            'phone' => 'required|string|unique:users,phone',
+            'name' => 'nullable|string|min:3|max:50',
+            'address' => 'nullable|string|min:5|max:100',
+            'birthdate' => 'nullable|date|date_format:Y-m-d',
+            'birth_place' => 'nullable|string|min:3|max:100',
+            'national_number' => 'nullable|digits:11|unique:users,national_number',
+            'phone' => 'nullable|digits:10|unique:users,phone',
         ];
     }
 
@@ -48,7 +44,7 @@ class RegisterRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->getResponse("errors", $validator->errors(), 422));
+        throw new ValidationException($validator, $this->getResponse('errors', $validator->errors(), 422));
     }
 
     /**
@@ -58,14 +54,11 @@ class RegisterRequest extends FormRequest
     public function attributes()
     {
         return [
-            "name" => "Full name",
-            "email" => "Email address",
-            "password" => "Password",
+            'name' => 'Full name',
             'address' => 'Address',
             'birthdate' => 'Birth date',
             'birth_place' => 'Birth place',
             'national_number' => 'National number',
-            'gender' => 'Gender',
             'phone' => 'Phone number',
         ];
     }
@@ -77,13 +70,10 @@ class RegisterRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => ':attribute is required.',
-            'email' => 'Please enter a valid :attribute.',
             'unique' => 'This :attribute is already registered.',
             'min' => ':attribute must be at least :min characters long.',
-            'confirmed' => ':attribute does not match.',
             'in' => ':attribute must be either "male" or "female"',
-            'date' => 'The :attribute must be a valid date format.'
+            'date' => 'The :attribute must be a valid date format.',
         ];
     }
 }

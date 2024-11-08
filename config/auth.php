@@ -44,6 +44,14 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+        'lawyer' => [
+            'driver' => 'jwt',
+            'provider' => 'lawyers',
+        ],
+        'representative' => [
+            'driver' => 'jwt',
+            'provider' => 'representatives',
+        ],
     ],
 
     /*
@@ -67,6 +75,14 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
+        ],
+        'lawyers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Lawyer::class,
+        ],
+        'representatives' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Representative::class,
         ],
 
         // 'users' => [
