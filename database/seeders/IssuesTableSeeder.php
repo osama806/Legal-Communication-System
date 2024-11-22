@@ -15,13 +15,13 @@ class IssuesTableSeeder extends Seeder
     {
         $faker = \Faker\Factory::create();
 
-         // إدخال بيانات وهمية لـ 200 قضية
-         for ($i = 0; $i < 200; $i++) {
+        // إدخال بيانات وهمية لـ 200 قضية
+        for ($i = 0; $i < 200; $i++) {
             DB::table('issues')->insert([
                 'base_number' => $faker->unique()->numerify('########'), // رقم أساس فريد
                 'record_number' => $faker->unique()->numerify('########'), // رقم السجل فريد
                 'lawyer_id' => $faker->numberBetween(1, 200), // ID المحامي من 1 إلى 50 (تأكد من وجود هذه IDs)
-                'agency_id' => $faker->numerify(2),
+                'agency_id' => $faker->numberBetween(2, 202),
                 'court_name' => $faker->randomElement(['جنايات', 'شرعية', 'جزاء', 'صلح']),
                 'type' => $faker->randomElement(['جنائية', 'مدنية', 'تجارية', 'عائلية']),
                 'start_date' => $faker->date('Y-m-d', 'now'),

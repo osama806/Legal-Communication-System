@@ -8,11 +8,19 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\UserController;
+use App\Http\Resources\AgencyResource;
+use App\Models\Agency;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
     Route::prefix("ai")->group(function () {
-        Route::get("users", [UserController::class, "usersAI"]);
+        Route::get("agencies", function () {
+            $agencies = Agency::all();
+            return response([
+                'isSuccess' => true,
+                'agencies' => AgencyResource::collection($agencies)
+            ]);
+        });
         Route::get("lawyers", [LawyerController::class, "lawyersAI"]);
         Route::get("issues", [IssueController::class, "issuesAI"]);
         Route::get("rates", [RateController::class, "ratesAI"]);

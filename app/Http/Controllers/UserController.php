@@ -187,17 +187,4 @@ class UserController extends Controller
         $agency->save();
         return $this->getResponse('msg', 'Agency Isolated Successfully', 200);
     }
-
-    /**
-     * Get list of users forward to AI
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function usersAI()
-    {
-        $users = User::whereHas('role', function ($query) {
-            $query->where('name', 'user');
-        })->get();
-
-        return $this->getResponse('users', UserResource::collection($users), 200);
-    }
 }
