@@ -49,12 +49,15 @@ class AssetsService
             $filePath = "Images/{$fileName}.{$extension}";
 
             // Store the file securely
-            Storage::disk('local')->putFileAs('public/Images', $file, $fileName . '.' . $extension);
+            $path = Storage::disk('local')->putFileAs('public/Images', $file, $fileName . '.' . $extension);
+
+            // Get the full URL path of the stored file
+            $url = Storage::disk('local')->url($path);
 
             // Return the URL of the uploaded image
             return [
                 'status' => true,
-                'url' => $fileName . '.' . $extension
+                'url' => $url
             ];
 
         } catch (Exception $e) {

@@ -88,31 +88,4 @@ class RepresentativeController extends Controller
         $representative = Auth::guard('representative')->user();
         return $this->getResponse('notifications', NotificationResource::collection($representative->notifications), 200);
     }
-
-    /**
-     * Get representative avatar
-     * @param mixed $representativeID
-     * @param mixed $avatarID
-     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
-    public function getAvatar($representativeID, $avatarID)
-    {
-        $representative = Representative::where("id", $representativeID)->where("avatar", $avatarID)->first();
-        if (!$representative) {
-            return $this->getResponse("error", "Avatar Not Found", 404);
-        }
-
-        if (Auth::guard('representative')->id() !== $representativeID) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-
-        $response = $this->representativeService->avatar($avatarID);
-        if ($response['status']) {
-            // Directly return the image content with headers
-            return response($response['avatar'], 200)
-                ->header('Content-Type', $response['type']);
-        } else {
-            return $this->getResponse('error', $response['msg'], $response['code']);
-        }
-    }
 }

@@ -218,32 +218,4 @@ class UserController extends Controller
         }
         return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
     }
-
-    /**
-     * Get user avatar
-     * @param mixed $userID
-     * @param mixed $avatarID
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getAvatar($userID, $avatarID)
-    {
-        $user = User::where("id", $userID)->where("avatar", $avatarID)->first();
-        if (!$user) {
-            return $this->getResponse("error", "Avatar Not Found", 404);
-        }
-
-        if (Auth::guard('api')->id() !== $userID) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-
-        $response = $this->userService->avatar($avatarID);
-        if ($response['status']) {
-            // Directly return the image content with headers
-            return response($response['avatar'], 200)
-                ->header('Content-Type', $response['type']);
-        } else {
-            return $this->getResponse('error', $response['msg'], $response['code']);
-        }
-    }
-
 }

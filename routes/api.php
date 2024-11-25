@@ -9,8 +9,6 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\UserController;
-use App\Http\Resources\AgencyResource;
-use App\Models\Agency;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
@@ -60,7 +58,6 @@ Route::prefix("v1")->group(function () {
             Route::get('{id}/notifications', 'getNotifications');
             Route::get('get-lawyers', 'getLawyers');
             Route::get('get-lawyers/{id}', 'getLawyer');
-            Route::get('{userID}/avatar/{avatarID}', 'getAvatar');
         });
         Route::post('get-lawyers/{id}/rating', [RateController::class, 'store'])->middleware('auth:api');
         Route::put('get-rates/{id}', [RateController::class, 'update'])->middleware('auth:api');
@@ -77,7 +74,6 @@ Route::prefix("v1")->group(function () {
             Route::delete("get-lawyers/{id}", "destroyLawyer");
             Route::put("get-representatives/{id}", "updateRepresentative");
             Route::delete("get-representatives/{id}", "destroyRepresentative");
-            Route::get('{employeeID}/avatar/{avatarID}', 'getAvatar');
         });
         Route::middleware('auth:api')->group(function () {
             Route::apiResource('get-specializations', SpecializationController::class)->only(['update', 'destroy']);
@@ -94,7 +90,6 @@ Route::prefix("v1")->group(function () {
             Route::post('get-issues/{id}/finish', [IssueController::class, 'endIssue']);
             Route::get('{id}/notifications', [LawyerController::class, 'getNotifications']);
             Route::post('{id}/send-notify-to-representative', [LawyerController::class, 'sendNotificationToRep']);
-            Route::get('{lawyerID}/avatar/{avatarID}', [LawyerController::class, 'getAvatar']);
         });
     });
 
@@ -105,7 +100,6 @@ Route::prefix("v1")->group(function () {
             Route::get('profile', 'profile');
             Route::get('{id}/notifications', 'getNotifications');
             Route::post('{id}/send-notify-to-all', 'sendNotificationsToAll');
-            Route::get('{representativeID}/avatar/{avatarID}', 'getAvatar');
         });
     });
 });

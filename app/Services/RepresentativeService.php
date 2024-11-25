@@ -54,32 +54,4 @@ class RepresentativeService
             ];
         }
     }
-
-    /**
-     * Get representative avatar
-     * @param mixed $filename
-     * @return array
-     */
-    public function avatar($filename)
-    {
-        // تحقق مما إذا كانت الصورة موجودة في التخزين
-        if (!Storage::disk('public')->exists("Images/{$filename}")) {
-            return [
-                'status' => false,
-                'msg' => 'Image not found',
-                'code' => 404
-            ];
-        }
-
-        // جلب محتوى الصورة
-        $fileContent = Storage::disk('public')->get("Images/{$filename}");
-        $mimeType = Storage::disk('public')->mimeType("Images/{$filename}");
-
-        // عرض الصورة مع تحديد نوع المحتوى
-        return [
-            'status' => true,
-            'avatar' => $fileContent,
-            'type' => $mimeType
-        ];
-    }
 }

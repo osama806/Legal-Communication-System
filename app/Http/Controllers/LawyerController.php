@@ -101,31 +101,4 @@ class LawyerController extends Controller
         $lawyers = Lawyer::all();
         return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
     }
-
-    /**
-     * Get lawyer avatar
-     * @param mixed $lawyerID
-     * @param mixed $avatarID
-     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
-    public function getAvatar($lawyerID, $avatarID)
-    {
-        $lawyer = Lawyer::where("id", $lawyerID)->where("avatar", $avatarID)->first();
-        if (!$lawyer) {
-            return $this->getResponse("error", "Avatar Not Found", 404);
-        }
-
-        if (Auth::guard('lawyer')->id() !== $lawyerID) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-
-        $response = $this->lawyerService->avatar($avatarID);
-        if ($response['status']) {
-            // Directly return the image content with headers
-            return response($response['avatar'], 200)
-                ->header('Content-Type', $response['type']);
-        } else {
-            return $this->getResponse('error', $response['msg'], $response['code']);
-        }
-    }
 }
