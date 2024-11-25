@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\RegisterLawyerRequest;
 use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
@@ -24,14 +25,26 @@ class LawyerController extends Controller
     }
 
     /**
-     * Lawyer login
+     * Create new lawyer by admin
+     * @param \App\Http\Requests\Admin\RegisterLawyerRequest $registerLawyerRequest
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function registerLawyer(RegisterLawyerRequest $registerLawyerRequest)
+    {
+        $response = $this->lawyerService->signupLawyer($registerLawyerRequest->validated());
+        return $response['status']
+            ? $this->getResponse("token", $response['token'], 201)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    /**
+     * Login
      * @param \App\Http\Requests\Auth\LoginRequest $request
      * @return mixed|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function login(LoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
-
         if (!$token = Auth::guard('lawyer')->attempt($credentials)) {
             return $this->getResponse('error', 'Email or password is incorrect!', 401);
         }
@@ -44,7 +57,7 @@ class LawyerController extends Controller
     }
 
     /**
-     * Lawyer logout
+     * Logout
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function logout()
@@ -60,7 +73,6 @@ class LawyerController extends Controller
     public function profile()
     {
         $lawyer = Lawyer::where('id', Auth::guard('lawyer')->user()->id)->first();
-
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
@@ -100,5 +112,99 @@ class LawyerController extends Controller
     {
         $lawyers = Lawyer::all();
         return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
+    }
+
+    /**
+     * Display list of lawyers by admin
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getLawyers()
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $lawyers = Lawyer::all();
+
+        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
+    }
+
+    /**
+     * Display specified lawyer by admin
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getLawyer($id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse("error", "Lawyer Not Found!", 404);
+        }
+        return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
+    }
+
+    /**
+     * Update lawyer info by employee
+     * @param \App\Http\Requests\Employee\UpdateLawyerInfoRequest $updateLawyerRequest
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function updateLawyer(UpdateLawyerInfoRequest $updateLawyerRequest, $id)
+    {
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+        }
+        $response = $this->lawyerService->updateLawyer($updateLawyerRequest->validated(), $lawyer);
+        return $response['status']
+            ? $this->getResponse("msg", "Lawyer updated profile successfully", 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    /**
+     * Delete lawyer account by employee
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function destroyLawyer($id)
+    {
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+        }
+        $response = $this->lawyerService->destroyLawyer($lawyer);
+
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Display list of lawyers by user
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function fetchLawyers()
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $lawyers = Lawyer::all();
+
+        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
+    }
+
+    /**
+     * Display specified lawyer by user
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function fetchLawyer($id)
+    {
+        $response = $this->lawyerService->fetchOne($id);
+        return $response['status']
+            ? $this->getResponse('lawyer', new LawyerResource($response['lawyer']), 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

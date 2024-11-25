@@ -18,7 +18,12 @@ class UpdateProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::check() && Auth::guard('api')->hasRole('user');
+    }
+
+    public function failedAuthorization()
+    {
+        throw new HttpResponseException($this->getResponse('error', 'This action is unauthorized', 422));
     }
 
     /**

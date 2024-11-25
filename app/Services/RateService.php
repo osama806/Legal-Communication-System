@@ -48,6 +48,36 @@ class RateService
     }
 
     /**
+     * Display one rate
+     * @param string $id
+     * @return array
+     */
+    public function showRate(string $id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $rate = Rate::find($id);
+        if (!$rate) {
+            return [
+                'status' => false,
+                'msg' => 'Rate Not Found!',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'rate' => $rate,
+        ];
+    }
+
+    /**
      * Update the specified rate in storage.
      * @param array $data
      * @param \App\Models\Rate $rate
@@ -84,5 +114,33 @@ class RateService
                 'code' => 500
             ];
         }
+    }
+
+    /**
+     * Remove rate
+     * @param string $id
+     * @return array
+     */
+    public function deleteRate(string $id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $rate = Rate::find($id);
+        if (!$rate) {
+            return [
+                'status' => false,
+                'msg' => 'Rate Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $rate->delete();
+        return ['status' => true];
     }
 }

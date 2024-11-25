@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Agency;
-use App\Models\Issue;
 use Auth;
 use Exception;
-use Log;
+use App\Models\Issue;
+use App\Models\Agency;
 
 class IssueService
 {
@@ -160,5 +159,33 @@ class IssueService
                 'code' => 500,
             ];
         }
+    }
+
+    /**
+     * Delete issue by lawyer
+     * @param \App\Models\Issue $issue
+     * @return array
+     */
+    public function removeIssue(Issue $issue)
+    {
+        if (!$issue) {
+            return [
+                'status' => false,
+                'msg' => 'Issue Not Found',
+                'code' => 404
+            ];
+        }
+
+        $agency = Agency::find($issue->agency_id);
+        if (!$agency->is_active) {
+            return [
+                'status' => false,
+                'msg' => 'This Agency is Expired',
+                'code' => 403
+            ];
+        }
+
+        $issue->delete();
+        return ['status' => true];
     }
 }

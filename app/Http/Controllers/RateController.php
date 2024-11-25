@@ -31,13 +31,13 @@ class RateController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
-
         $rates = Rate::all();
+
         return $this->getResponse('rates', RateResource::collection($rates), 200);
     }
 
     /**
-     * Store a newly created rating in storage.
+     * Store a newly created rating in storage by user.
      * @param \App\Http\Requests\Rate\StoreRatingRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
@@ -48,8 +48,8 @@ class RateController extends Controller
         if (!$lawyer) {
             return $this->getResponse("error", "Lawyer Not Found!", 404);
         }
-
         $response = $this->rateService->createRate($request->validated(), $lawyer);
+
         return $response['status']
             ? $this->getResponse('msg', 'Create Rating To Lawyer ' . "'" . $lawyer->name . "'" . ' Successfully', 201)
             : $this->getResponse('error', $response['msg'], $response['code']);
@@ -62,20 +62,14 @@ class RateController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-
-        $rate = Rate::find($id);
-        if (!$rate) {
-            return $this->getResponse('error', 'Rate Not Found!', 404);
-        }
-
-        return $this->getResponse('rate', new RateResource($rate), 200);
+        $response = $this->rateService->showRate($id);
+        return $response['status']
+            ? $this->getResponse('rate', new RateResource($response['rate']), 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
-     * Update the specified rate in storage.
+     * Update the specified rate in storage by user.
      * @param \App\Http\Requests\Rate\UpdateRatingRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
@@ -86,8 +80,8 @@ class RateController extends Controller
         if (!$rate) {
             return $this->getResponse('error', 'Rate Not Found!', 404);
         }
-
         $response = $this->rateService->updateRate($request->validated(), $rate);
+
         return $response['status']
             ? $this->getResponse('msg', 'Updated Rating Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
@@ -100,17 +94,10 @@ class RateController extends Controller
      */
     public function destroy($id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-
-        $rate = Rate::find($id);
-        if (!$rate) {
-            return $this->getResponse('error', 'Rate Not Found!', 404);
-        }
-
-        $rate->delete();
-        return $this->getResponse('msg', 'Deleted Rate Successfully', 200);
+        $response = $this->rateService->deleteRate($id);
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Rate Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\RegisterEmployeeRequest;
 use Auth;
 use App\Models\User;
-use App\Models\Lawyer;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
-use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
-use App\Http\Requests\Employee\UpdateUserInfoRequest;
 use App\Http\Resources\UserResource;
-use App\Models\Representative;
 use App\Services\EmployeeService;
 use App\Traits\ResponseTrait;
 
@@ -25,31 +21,34 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Create new employee by admin
+     * @param \App\Http\Requests\Admin\RegisterEmployeeRequest $registerRequest
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function registerEmployee(RegisterEmployeeRequest $registerRequest)
+    {
+        $response = $this->employeeService->signup($registerRequest->validated());
+        return $response['status']
+            ? $this->getResponse("token", $response['token'], 201)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    /**
      * Login
      * @param \App\Http\Requests\Auth\LoginRequest $request
      * @return mixed|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function signin(LoginRequest $request)
     {
-        $credentials = $request->only('email', 'password');
+        $response = $this->employeeService->login($request->validated());
 
-        if (!$token = Auth::guard('api')->attempt($credentials)) {
-            return $this->getResponse('error', 'Email or password is incorrect!', 401);
-        }
-
-        // Get the authenticated user
-        $role_user = Auth::guard('api')->user();
-
-        // Check if the user is null or does not have the 'employee' role
-        if (!$role_user || !$role_user->hasRole('employee')) {
-            return $this->getResponse('error', 'Does not have employee privileges!', 403);
-        }
-
-        return response([
-            "isSuccess" => true,
-            'token' => $token,
-            'role' => $role_user->role->name
-        ], 201);
+        return $response['status']
+            ? response([
+                "isSuccess" => true,
+                'token' => $response['token'],
+                'role' => $response['role'],
+            ], 201)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -69,120 +68,39 @@ class EmployeeController extends Controller
     public function profile()
     {
         $user = User::where('id', Auth::guard('api')->user()->id)->first();
-
         if ($user && $user->role->name !== 'employee') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
+
         return $this->getResponse("profile", new UserResource($user), 200);
     }
 
     /**
-     * Update user account
-     * @param \App\Http\Requests\Employee\UpdateUserInfoRequest $updateUserInfoRequest
-     * @param mixed $id
+     * Get list of employees by admin
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function updateUser(UpdateUserInfoRequest $updateUserInfoRequest, $id)
+    public function getEmployees()
     {
-        $user = User::find($id);
-        if (!$user) {
-            return $this->getResponse('error', 'User Not Found!', 404);
-        }
-
-        $response = $this->employeeService->updateUser($updateUserInfoRequest->validated(), $user);
-        return $response['status']
-            ? $this->getResponse("msg", "Updated user profile successfully", 200)
+        $response = $this->employeeService->fetchAll();
+        return $response["status"]
+            ? $this->getResponse("employees", UserResource::collection($response['employees']), 200)
             : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
     /**
-     * Delete user account
+     * Get employee info by admin
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function destroyUser($id)
+    public function getEmployee($id)
     {
-        $user = User::find($id);
-        if (!$user) {
-            return $this->getResponse('error', 'User Not Found!', 404);
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
         }
+        $response = $this->employeeService->fetchOne($id);
 
-        $response = $this->employeeService->deleteUser($user);
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
-    }
-
-    /**
-     * Update lawyer info
-     * @param \App\Http\Requests\Employee\UpdateLawyerInfoRequest $updateLawyerRequest
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function updateLawyer(UpdateLawyerInfoRequest $updateLawyerRequest, $id)
-    {
-        $lawyer = Lawyer::find($id);
-        if (!$lawyer) {
-            return $this->getResponse('error', 'Lawyer Not Found!', 404);
-        }
-        $response = $this->employeeService->updateLawyer($updateLawyerRequest->validated(), $lawyer);
-        return $response['status']
-            ? $this->getResponse("msg", "Lawyer updated profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
-    }
-
-    /**
-     * Delete lawyer account
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function destroyLawyer($id)
-    {
-        $lawyer = Lawyer::find($id);
-        if (!$lawyer) {
-            return $this->getResponse('error', 'Lawyer Not Found!', 404);
-        }
-
-        $response = $this->employeeService->destroyLawyer($lawyer);
-        return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
-    }
-
-    /**
-     * Update representative info
-     * @param \App\Http\Requests\Employee\UpdateRepresentativeInfoRequest $updateRepresentativeRequest
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function updateRepresentative(UpdateRepresentativeInfoRequest $updateRepresentativeRequest, $id)
-    {
-        $representative = Representative::find($id);
-        if (!$representative) {
-            return $this->getResponse('error', 'Representative Not Found!', 404);
-        }
-
-        $response = $this->employeeService->updateRepresentative($updateRepresentativeRequest->validated(), $representative);
-        return $response['status']
-            ? $this->getResponse("msg", "Representative updated profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
-    }
-
-    /**
-     * Delete representative account
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function destroyRepresentative($id)
-    {
-        $representative = Representative::find($id);
-        if (!$representative) {
-            return $this->getResponse('error', 'Representative Not Found!', 404);
-        }
-
-        $response = $this->employeeService->destroyRepresentative($representative);
-        return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            ? $this->getResponse('employee', new UserResource($response['employee']), 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Requests\Issue\StoreIssueRequest;
 use App\Http\Requests\Issue\FinishIssueStatusRequest;
 use App\Http\Requests\Issue\UpdateStatusRequest;
 use App\Http\Resources\IssueResource;
-use App\Models\Agency;
 use App\Models\Issue;
 use App\Services\IssueService;
 use App\Traits\ResponseTrait;
@@ -72,6 +71,7 @@ class IssueController extends Controller
             return $this->getResponse('error', 'Issue Not Found', 404);
         }
         $response = $this->issueService->changeStatus($request->validated(), $issue);
+
         return $response['status']
             ? $this->getResponse('msg', 'Changed Issue Status Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
@@ -90,6 +90,7 @@ class IssueController extends Controller
             return $this->getResponse('error', 'Issue Not Found', 404);
         }
         $response = $this->issueService->endIssue($request->validated(), $issue);
+
         return $response['status']
             ? $this->getResponse('msg', 'Ended Issue Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
@@ -105,19 +106,12 @@ class IssueController extends Controller
         if (Auth::guard('lawyer')->check() && Auth::guard('lawyer')->user()->role->name !== 'lawyer') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
-
         $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
-        if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
-        }
 
-        $agency = Agency::find($issue->agency_id);
-        if (!$agency->is_active) {
-            return $this->getResponse('error', 'This Agency is Expired', 403);
-        }
-
-        $issue->delete();
-        return $this->getResponse('msg', 'Deleted Issue Successfully', 200);
+        $response = $this->issueService->removeIssue($issue);
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Issue Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

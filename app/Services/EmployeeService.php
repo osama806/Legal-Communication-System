@@ -2,17 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Lawyer;
-use App\Models\Representative;
 use App\Models\User;
 use Auth;
+use DB;
 use Exception;
-use Log;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Exceptions\TokenInvalidException;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Support\Facades\Storage;
-
+use Hash;
 
 class EmployeeService
 {
@@ -23,224 +17,126 @@ class EmployeeService
     }
 
     /**
-     * Update user info
+     * register
      * @param array $data
-     * @param \App\Models\User $user
      * @return array
      */
-    public function updateUser(array $data, User $user)
+    public function signup(array $data)
     {
-        if (!$user->hasRole('user')) {
-            return [
-                'status' => false,
-                'msg' => 'Not allow this permission.',
-                'code' => 422,
-            ];
-        }
-
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
-            $filteredData = array_filter($data, function ($value) {
-                return !is_null($value) && trim($value) !== '';
-            });
+            DB::beginTransaction();
+            $employee = User::create($data);
+            $employee->password = Hash::make($data["password"]);
+            $employee->avatar = $avatarResponse['url'];
+            $employee->save();
 
-            if (count($filteredData) < 1) {
+            $employee->role()->create([
+                'name' => 'employee'
+            ]);
+
+            // Mail::to($employee->email)->send(new VerifyCodeMail($employee));
+
+            // تسجيل الدخول وتوليد التوكن
+            $credentials = ['email' => $data['email'], 'password' => $data['password']];
+            if (!$token = Auth::guard('api')->attempt($credentials)) {
                 return [
                     'status' => false,
-                    'msg' => 'Not Found Any Data to Update',
-                    'code' => 404
+                    'msg' => 'Failed to generate token, but employee registered successfully',
+                    'code' => 401
                 ];
             }
 
-            $user->update($filteredData);
-
-            if ($data['avatar']) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $user->avatar = $avatarResponse['url'];
-                $user->save();
-            }
-            return ['status' => true];
-
-        } catch (Exception $e) {
+            DB::commit();
             return [
-                'status' => false,
-                'msg' => 'Failed to update profile. Please try again.',
-                'code' => 500
+                'status' => true,
+                'token' => $token,
             ];
-        }
-    }
 
-    /**
-     * Delete user account
-     * @param \App\Models\User $user
-     * @return array
-     */
-    public function deleteUser(User $user)
-    {
-        if (!$user->hasRole('user')) {
-            return ['status' => false, 'msg' => 'Not allow this permission.', 'code' => 422];
-        }
-
-        try {
-            if (JWTAuth::parseToken()->check()) {
-                JWTAuth::invalidate(JWTAuth::getToken());
-            }
-            $user->delete();
-            return ['status' => true];
-
-        } catch (TokenInvalidException $e) {
-            Log::error('Error Invalid token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Invalid token.', 'code' => 401];
-        } catch (JWTException $e) {
-            Log::error('Error invalidating token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
         } catch (Exception $e) {
-            Log::error('Error deleting account: ' . $e->getMessage());
+            DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }
 
     /**
-     * Update lawyer info
+     * Login
      * @param array $data
-     * @param \App\Models\Lawyer $lawyer
      * @return array
      */
-    public function updateLawyer(array $data, Lawyer $lawyer)
+    public function login(array $data)
     {
-        try {
-            $filteredData = array_filter($data, function ($value) {
-                return !is_null($value) && trim($value) !== '';
-            });
-
-            if (count($filteredData) < 1) {
-                return [
-                    'status' => false,
-                    'msg' => 'Not Found Any Data to Update',
-                    'code' => 404
-                ];
-            }
-            $lawyer->update($filteredData);
-
-            if ($data['avatar']) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $lawyer->avatar = $avatarResponse['url'];
-                $lawyer->save();
-            }
-            return ['status' => true];
-        } catch (Exception $e) {
+        if (!$token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
             return [
                 'status' => false,
-                'msg' => $e->getMessage(),
-                'code' => 500
+                'msg' => 'Email or password is incorrect!',
+                'code' => 401
             ];
         }
+
+        // Get the authenticated user
+        $role_user = Auth::guard('api')->user();
+
+        // Check if the user is null or does not have the 'employee' role
+        if (!$role_user || !$role_user->hasRole('employee')) {
+            return [
+                'status' => false,
+                'msg' => 'Does not have employee privileges!',
+                'code' => 403
+            ];
+        }
+
+        return [
+            'status' => true,
+            'token' => $token,
+            'role' => $role_user->role->name
+        ];
     }
 
     /**
-     * Delete lawyer account
-     * @param \App\Models\Lawyer $lawyer
+     * Get employees by admin
      * @return array
      */
-    public function destroyLawyer(Lawyer $lawyer)
+    public function fetchAll()
     {
-        if (Auth::user()->role->name !== 'employee') {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return [
                 'status' => false,
-                'msg' => 'This action is unauthorized.',
+                'msg' => 'This action is unauthorized',
                 'code' => 422
             ];
         }
+        $employees = User::whereHas('role', function ($query) {
+            $query->where('name', 'employee');
+        })->get();
 
-        try {
-            // Check if the token is valid
-            if (JWTAuth::parseToken()->check()) {
-                JWTAuth::invalidate(JWTAuth::getToken());
-            }
-            $lawyer->delete();
-            return ['status' => true];
-
-        } catch (TokenInvalidException $e) {
-            Log::error('Error Invalid token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Invalid token.', 'code' => 401];
-        } catch (JWTException $e) {
-            Log::error('Error invalidating token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
-        } catch (Exception $e) {
-            Log::error('Error deleting account: ' . $e->getMessage());
-            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
-        }
+        return [
+            'status' => true,
+            'employees' => $employees
+        ];
     }
 
     /**
-     * Update representative info
-     * @param array $data
-     * @param \App\Models\Representative $representative
+     * Get one employee
+     * @param string $id
      * @return array
      */
-    public function updateRepresentative(array $data, Representative $representative)
+    public function fetchOne(string $id)
     {
-        try {
-            $filteredData = array_filter($data, function ($value) {
-                return !is_null($value) && trim($value) !== '';
-            });
-
-            if (count($filteredData) < 1) {
-                return [
-                    'status' => false,
-                    'msg' => 'Not Found Any Data to Update',
-                    'code' => 404
-                ];
-            }
-            $representative->update($filteredData);
-
-            if ($data['avatar']) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $representative->avatar = $avatarResponse['url'];
-                $representative->save();
-            }
-            return ['status' => true];
-        } catch (Exception $e) {
+        $employee = User::where('id', $id)->whereHas('role', function ($query) {
+            $query->where('name', 'employee');
+        })->first();
+        if (!$employee) {
             return [
                 'status' => false,
-                'msg' => 'Failed to update profile. Please try again.',
-                'code' => 500
-            ];
-        }
-    }
-
-    /**
-     * Delete representative account
-     * @param \App\Models\Representative $representative
-     * @return array
-     */
-    public function destroyRepresentative(Representative $representative)
-    {
-        if (Auth::user()->role->name !== 'employee') {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized.',
-                'code' => 422
+                'msg' => 'Employee Not Found',
+                'code' => 404
             ];
         }
 
-        try {
-            // Check if the token is valid
-            if (JWTAuth::parseToken()->check()) {
-                JWTAuth::invalidate(JWTAuth::getToken());
-            }
-            $representative->delete();
-            return ['status' => true];
-
-        } catch (TokenInvalidException $e) {
-            Log::error('Error Invalid token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Invalid token.', 'code' => 401];
-        } catch (JWTException $e) {
-            Log::error('Error invalidating token: ' . $e->getMessage());
-            return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
-        } catch (Exception $e) {
-            Log::error('Error deleting account: ' . $e->getMessage());
-            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
-        }
+        return [
+            'status' => true,
+            'employee' => $employee
+        ];
     }
-
 }

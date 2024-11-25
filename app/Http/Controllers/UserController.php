@@ -36,25 +36,15 @@ class UserController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        $credentials = $request->only('email', 'password');
+        $response = $this->userService->login($request->validated());
 
-        if (!$token = Auth::guard('api')->attempt($credentials)) {
-            return $this->getResponse('error', 'Email or password is incorrect!', 401);
-        }
-
-        // Get the authenticated user
-        $role_user = Auth::guard('api')->user();
-
-        // Check if the user is null or does not have the 'user' role
-        if (!$role_user || !$role_user->hasRole('user')) {
-            return $this->getResponse('error', 'Does not have user privileges!', 403);
-        }
-
-        return response([
-            "isSuccess" => true,
-            'token' => $token,
-            'role' => $role_user->role->name
-        ], 201);
+        return $response['status']
+            ? response([
+                "isSuccess" => true,
+                'token' => $response['token'],
+                'role' => $response['role']
+            ], 201)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -68,24 +58,16 @@ class UserController extends Controller
     }
 
     /**
-     * Change password by owned
-     * @param \App\Http\Requests\Auth\ChangePasswordFormRequest $changePasswordFormRequest
+     * Change password by user
+     * @param \App\Http\Requests\Auth\ChangePasswordFormRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function changePassword(ChangePasswordFormRequest $changePasswordFormRequest)
+    public function changePassword(ChangePasswordFormRequest $request)
     {
-        $user = Auth::user();
-        $validatedData = $changePasswordFormRequest->validated();
-
-        // Check if the current password matches
-        if (!Hash::check($validatedData['current_password'], $user->password)) {
-            return $this->getResponse('error', 'The current password is incorrect.', 400);
-        }
-
-        // Update the user's password
-        $user->password = Hash::make($validatedData['new_password']);
-        $user->save();
-        return $this->getResponse('msg', 'Changed password successfully', 200);
+        $response = $this->userService->updatePassword($request->validated());
+        return $response['status']
+            ? $this->getResponse('msg', 'Changed password successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -108,15 +90,15 @@ class UserController extends Controller
     public function profile()
     {
         $user = User::where('id', Auth::guard('api')->user()->id)->first();
-
         if ($user && $user->role->name !== 'user') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
+
         return $this->getResponse("profile", new UserResource($user), 200);
     }
 
     /**
-     * Update account info owned
+     * Update account info
      * @param \App\Http\Requests\Auth\UpdateProfileRequest $updateProfileRequest
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -129,7 +111,7 @@ class UserController extends Controller
     }
 
     /**
-     * Delete account owned
+     * Delete account
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function destroy()
@@ -151,71 +133,77 @@ class UserController extends Controller
     }
 
     /**
-     * Agency request to lawyer by user
-     * @param \App\Http\Requests\Agency\StoreAgencyRequest $request
+     * Create new user by admin
+     * @param \App\Http\Requests\Admin\RegisterUserRequest $registerUserRequest
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function agencyRequest(StoreAgencyRequest $request)
+    public function registerUser(RegisterUserRequest $registerUserRequest)
     {
-        $response = $this->userService->createAgency($request->validated());
-        $lawyer = Lawyer::find($request['lawyer_id']);
+        $response = $this->userService->signupUser($registerUserRequest->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Send request to lawyer ' . $lawyer->name, 200)
+            ? $this->getResponse("token", $response['token'], 201)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of users by admin
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getUsers()
+    {
+        $response = $this->userService->fetchAll();
+        return $response['status']
+            ? $this->getResponse('users', UserResource::collection($response['users']), 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
-     * Agency isolate by user
+     * Get user info by admin
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function agencyIsolate($id)
+    public function getUser($id)
     {
-        $agency = Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
-        if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
-        }
-
-        if (!$agency->is_active && $agency->status === 'pending') {
-            return $this->getResponse('error', 'Agency Not Found', 404);
-        }
-
-        if (!$agency->is_active || $agency->status !== 'approved') {
-            return $this->getResponse('error', 'Agency is Expired', 403);
-        }
-
-        $agency->is_active = false;
-        $agency->save();
-        return $this->getResponse('msg', 'Agency Isolated Successfully', 200);
+        $response = $this->userService->fetchOne($id);
+        return $response['status']
+            ? $this->getResponse('user', new UserResource($response['user']), 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
-     * Display list of lawyers
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getLawyers()
-    {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $lawyers = Lawyer::all();
-        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
-    }
-
-    /**
-     * Display specified lawyer
+     * Update user account by employee
+     * @param \App\Http\Requests\Employee\UpdateUserInfoRequest $updateUserInfoRequest
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getLawyer($id)
+    public function updateUser(UpdateUserInfoRequest $updateUserInfoRequest, $id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+        $user = User::find($id);
+        if (!$user) {
+            return $this->getResponse('error', 'User Not Found!', 404);
         }
-        $lawyer = Lawyer::find($id);
-        if (!$lawyer) {
-            return $this->getResponse("error", "Lawyer Not Found!", 404);
+        $response = $this->userService->updateUser($updateUserInfoRequest->validated(), $user);
+
+        return $response['status']
+            ? $this->getResponse("msg", "Updated user profile successfully", 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
+    }
+
+    /**
+     * Delete user account by employee
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function destroyUser($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return $this->getResponse('error', 'User Not Found!', 404);
         }
-        return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
+        $response = $this->userService->deleteUser($user);
+
+        return $response['status']
+            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

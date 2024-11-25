@@ -2,14 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
+use App\Models\Lawyer;
+use App\Services\AgencyService;
 use App\Traits\ResponseTrait;
+use Auth;
 use Illuminate\Http\Request;
 
 class AgencyController extends Controller
 {
     use ResponseTrait;
+    protected $agencyService;
+    public function __construct(AgencyService $agencyService)
+    {
+        $this->agencyService = $agencyService;
+    }
 
     /**
      * Display a listing of the agencies.
@@ -22,11 +31,17 @@ class AgencyController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Agency request to lawyer by user
+     * @param \App\Http\Requests\Agency\StoreAgencyRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(StoreAgencyRequest $request)
     {
-        //
+        $response = $this->agencyService->createAgency($request->validated());
+        $lawyer = Lawyer::find($request['lawyer_id']);
+        return $response['status']
+            ? $this->getResponse('msg', 'Send request to lawyer ' . $lawyer->name, 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -46,10 +61,20 @@ class AgencyController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Agency isolate by user
+     * @param string $id
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function destroy(string $id)
     {
-        //
+        $agency = Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
+        if (!$agency) {
+            return $this->getResponse('error', 'Agency Not Found', 404);
+        }
+
+        $response = $this->agencyService->isolate($agency);
+        return $response['status']
+            ? $this->getResponse('msg', 'Agency Isolated Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

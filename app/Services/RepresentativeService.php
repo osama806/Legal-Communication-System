@@ -10,15 +10,17 @@ use App\Models\User;
 use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Models\Representative;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Notification;
-use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use App\Notifications\RepresentativeToAllNotification;
-use Illuminate\Support\Facades\Storage;
 
 class RepresentativeService
 {
+    protected $assetService;
+    public function __construct(AssetsService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+
     /**
      * Reply notification response to user and lawyer
      * @param array $data
@@ -52,6 +54,121 @@ class RepresentativeService
                 'msg' => $e->getMessage(),
                 'code' => 500,
             ];
+        }
+    }
+
+    /**
+     * register representative
+     * @param array $data
+     * @return array
+     */
+    public function signupRepresentative(array $data)
+    {
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
+        try {
+            DB::beginTransaction();
+            $representative = Representative::create($data);
+            $representative->password = Hash::make($data["password"]);
+            $representative->avatar = $avatarResponse['url'];
+            $representative->save();
+
+            $representative->role()->create([
+                'name' => 'representative'
+            ]);
+
+            // Mail::to($user->email)->send(new VerifyCodeMail($user));
+
+            // تسجيل الدخول وتوليد التوكن
+            $credentials = ['email' => $data['email'], 'password' => $data['password']];
+            if (!$token = Auth::guard('representative')->attempt($credentials)) {
+                return [
+                    'status' => false,
+                    'msg' => 'Failed to generate token, but representative registered successfully',
+                    'code' => 401
+                ];
+            }
+
+            DB::commit();
+            return [
+                'status' => true,
+                'token' => $token
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+        }
+    }
+
+    /**
+     * Update representative info by employee
+     * @param array $data
+     * @param \App\Models\Representative $representative
+     * @return array
+     */
+    public function updateRepresentative(array $data, Representative $representative)
+    {
+        try {
+            $filteredData = array_filter($data, function ($value) {
+                return !is_null($value) && trim($value) !== '';
+            });
+
+            if (count($filteredData) < 1) {
+                return [
+                    'status' => false,
+                    'msg' => 'Not Found Any Data to Update',
+                    'code' => 404
+                ];
+            }
+            $representative->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $representative->avatar = $avatarResponse['url'];
+                $representative->save();
+            }
+            return ['status' => true];
+        } catch (Exception $e) {
+            return [
+                'status' => false,
+                'msg' => 'Failed to update profile. Please try again.',
+                'code' => 500
+            ];
+        }
+    }
+
+    /**
+     * Delete representative account by employee
+     * @param \App\Models\Representative $representative
+     * @return array
+     */
+    public function destroyRepresentative(Representative $representative)
+    {
+        if (Auth::user()->role->name !== 'employee') {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized.',
+                'code' => 422
+            ];
+        }
+
+        try {
+            // Check if the token is valid
+            if (JWTAuth::parseToken()->check()) {
+                JWTAuth::invalidate(JWTAuth::getToken());
+            }
+            $representative->delete();
+            return ['status' => true];
+
+        } catch (TokenInvalidException $e) {
+            Log::error('Error Invalid token: ' . $e->getMessage());
+            return ['status' => false, 'msg' => 'Invalid token.', 'code' => 401];
+        } catch (JWTException $e) {
+            Log::error('Error invalidating token: ' . $e->getMessage());
+            return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
+        } catch (Exception $e) {
+            Log::error('Error deleting account: ' . $e->getMessage());
+            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }
 }

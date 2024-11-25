@@ -2,17 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Agency;
-use App\Models\Lawyer;
-use App\Notifications\UserToLawyerNotification;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Mail;
 use Exception;
 use App\Models\User;
 use App\Traits\ResponseTrait;
-use Notification;
-use Illuminate\Support\Facades\Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -74,6 +67,40 @@ class UserService
     }
 
     /**
+     * Login
+     * @param array $data
+     * @return array
+     */
+    public function login(array $data)
+    {
+        if (!$token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
+            return [
+                'status' => false,
+                'msg' => 'Email or password is incorrect!',
+                'code' => 401
+            ];
+        }
+
+        // Get the authenticated user
+        $role_user = Auth::guard('api')->user();
+
+        // Check if the user is null or does not have the 'user' role
+        if (!$role_user || !$role_user->hasRole('user')) {
+            return [
+                'status' => false,
+                'msg' => 'Does not have user privileges!',
+                'code' => 403
+            ];
+        }
+
+        return [
+            'status' => true,
+            'token' => $token,
+            'role' => $role_user->role->name
+        ];
+    }
+
+    /**
      * Update account info owned
      * @param array $data
      * @return array
@@ -112,6 +139,31 @@ class UserService
     }
 
     /**
+     * Change password by owned
+     * @param array $data
+     * @return array
+     */
+    public function updatePassword(array $data)
+    {
+        $user = Auth::user();
+
+        // Check if the current password matches
+        if (!Hash::check($data['current_password'], $user->password)) {
+            return [
+                'status' => false,
+                'msg' => 'The current password is incorrect',
+                'code' => 400
+            ];
+        }
+
+        // Update the user's password
+        $user->password = Hash::make($data['new_password']);
+        $user->save();
+
+        return ['status' => true];
+    }
+
+    /**
      * Delete account owned
      * @return array
      */
@@ -139,42 +191,42 @@ class UserService
     }
 
     /**
-     * Create new agency request with send notification to lawyer
+     * register user
      * @param array $data
      * @return array
      */
-    public function createAgency(array $data)
+    public function signupUser(array $data)
     {
-        $lawyer = Lawyer::find($data["lawyer_id"]);
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
-            // تحقق من عدد الطلبات التي قام بها المستخدم في اليوم الحالي
-            $userId = Auth::guard('api')->id();
-            $todayRequestsCount = Agency::where('user_id', $userId)->where('lawyer_id', $lawyer->id)
-                ->whereDate('created_at', Carbon::today())
-                ->count();
+            DB::beginTransaction();
+            $user = User::create($data);
+            $user->password = Hash::make($data["password"]);
+            $user->avatar = $avatarResponse['url'];
+            $user->save();
 
-            if ($todayRequestsCount >= 3) {
-                // إذا تجاوز المستخدم ثلاثة طلبات في نفس اليوم، قم بإرجاع رسالة
+            $user->role()->create([
+                'name' => 'user'
+            ]);
+
+            // Mail::to($user->email)->send(new VerifyCodeMail($user));
+
+            // تسجيل الدخول وتوليد التوكن
+            $credentials = ['email' => $data['email'], 'password' => $data['password']];
+            if (!$token = Auth::guard('api')->attempt($credentials)) {
                 return [
                     'status' => false,
-                    'msg' => "You have exceeded your limit for requesting agencies today. Please try again tomorrow.",
-                    'code' => 403
+                    'msg' => 'Failed to generate token, but user registered successfully',
+                    'code' => 401
                 ];
             }
 
-            DB::beginTransaction();
-            $agency = Agency::firstOrCreate([
-                "user_id" => Auth::guard('api')->id(),
-                "lawyer_id" => $data["lawyer_id"],
-                "cause" => $data['cause']
-            ]);
-
-            Notification::send($lawyer, new UserToLawyerNotification($agency));
             DB::commit();
-
             return [
                 'status' => true,
+                'token' => $token
             ];
+
         } catch (Exception $e) {
             DB::rollBack();
             return [
@@ -185,4 +237,137 @@ class UserService
         }
     }
 
+    /**
+     * Update user info
+     * @param array $data
+     * @param \App\Models\User $user
+     * @return array
+     */
+    public function updateUser(array $data, User $user)
+    {
+        if (!$user->hasRole('user')) {
+            return [
+                'status' => false,
+                'msg' => 'Not allow this permission.',
+                'code' => 422,
+            ];
+        }
+
+        try {
+            $filteredData = array_filter($data, function ($value) {
+                return !is_null($value) && trim($value) !== '';
+            });
+
+            if (count($filteredData) < 1) {
+                return [
+                    'status' => false,
+                    'msg' => 'Not Found Any Data to Update',
+                    'code' => 404
+                ];
+            }
+
+            $user->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $user->avatar = $avatarResponse['url'];
+                $user->save();
+            }
+            return ['status' => true];
+
+        } catch (Exception $e) {
+            return [
+                'status' => false,
+                'msg' => 'Failed to update profile. Please try again.',
+                'code' => 500
+            ];
+        }
+    }
+
+    /**
+     * Delete user account
+     * @param \App\Models\User $user
+     * @return array
+     */
+    public function deleteUser(User $user)
+    {
+        if (!$user->hasRole('user')) {
+            return ['status' => false, 'msg' => 'Not allow this permission.', 'code' => 422];
+        }
+
+        try {
+            if (JWTAuth::parseToken()->check()) {
+                JWTAuth::invalidate(JWTAuth::getToken());
+            }
+            $user->delete();
+            return ['status' => true];
+
+        } catch (TokenInvalidException $e) {
+            Log::error('Error Invalid token: ' . $e->getMessage());
+            return ['status' => false, 'msg' => 'Invalid token.', 'code' => 401];
+        } catch (JWTException $e) {
+            Log::error('Error invalidating token: ' . $e->getMessage());
+            return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
+        } catch (Exception $e) {
+            Log::error('Error deleting account: ' . $e->getMessage());
+            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+        }
+    }
+
+    /**
+     * Get all users by admin
+     * @return array
+     */
+    public function fetchAll()
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $users = User::whereHas('role', function ($query) {
+            $query->where('name', 'user');
+        })->get();
+
+        return [
+            'status' => true,
+            'users' => $users
+        ];
+    }
+
+    /**
+     * Get one user by admin
+     * @param string $id
+     * @return array
+     */
+    public function fetchOne(string $id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $user = User::where('id', $id)->whereHas('role', function ($query) {
+            $query->where('name', 'user');
+        })->first();
+
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User Not Found',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'user' => $user
+        ];
+    }
 }
