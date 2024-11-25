@@ -21,6 +21,7 @@ class RepresentativeResource extends JsonResource
             'address' => $this->address,
             'union_branch' => $this->union_branch,
             'union_number' => $this->union_number,
+            "avatar" => $this->avatar,
             'agencies' => AgencyResource::collection($this->agencies),
         ];
     }

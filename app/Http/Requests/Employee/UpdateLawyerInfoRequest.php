@@ -42,7 +42,9 @@ class UpdateLawyerInfoRequest extends FormRequest
             'union_number' => 'nullable|digits:8|unique:lawyers,union_number',
             'affiliation_date' => 'nullable|date|date_format:Y-m-d',
             'years_of_experience' => 'nullable|integer|min:1',
-            'phone' => 'nullable|digits:10|unique:lawyers,phone'
+            'phone' => 'nullable|digits:10|unique:lawyers,phone',
+            'description' => 'nullable|string|min:50',
+            'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -71,6 +73,8 @@ class UpdateLawyerInfoRequest extends FormRequest
             'affiliation_date' => 'Affiliation date',
             'years_of_experience' => 'Years of experience',
             'phone' => 'Phone number',
+            'description' => 'Description',
+            'avatar' => 'Avatar'
         ];
     }
 

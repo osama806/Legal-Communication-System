@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Auth;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Log;
 use Notification;

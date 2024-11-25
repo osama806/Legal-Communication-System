@@ -6,7 +6,7 @@ use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Notifications\UserToLawyerNotification;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Mail;
 use Exception;
 use App\Models\User;
@@ -23,6 +23,12 @@ class UserService
 {
     use ResponseTrait;
 
+    protected $assetService;
+    public function __construct(AssetsService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+
     /**
      * Create new user
      * @param array $data
@@ -30,9 +36,12 @@ class UserService
      */
     public function register(array $data)
     {
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            DB::beginTransaction();
             $user = User::create($data);
             $user->password = Hash::make($data["password"]);
+            $user->avatar = $avatarResponse['url'];
             $user->save();
 
             $user->role()->create([
@@ -51,12 +60,14 @@ class UserService
                 ];
             }
 
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
+            DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }
@@ -82,6 +93,12 @@ class UserService
                 ];
             }
             $user->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $user->avatar = $avatarResponse['url'];
+                $user->save();
+            }
             return ['status' => true];
         } catch (Exception $e) {
 

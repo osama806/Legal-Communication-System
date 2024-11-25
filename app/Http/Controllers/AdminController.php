@@ -98,7 +98,7 @@ class AdminController extends Controller
      */
     public function getUsers()
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -116,7 +116,7 @@ class AdminController extends Controller
      */
     public function getUser($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -163,7 +163,7 @@ class AdminController extends Controller
      */
     public function getEmployees()
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -181,7 +181,7 @@ class AdminController extends Controller
      */
     public function getEmployee($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -214,7 +214,7 @@ class AdminController extends Controller
      */
     public function getLawyers()
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
         $lawyers = Lawyer::all();
@@ -228,7 +228,7 @@ class AdminController extends Controller
      */
     public function getLawyer($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
         $lawyer = Lawyer::find($id);
@@ -257,7 +257,7 @@ class AdminController extends Controller
      */
     public function getRepresentatives()
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
         $representatives = Representative::all();
@@ -271,7 +271,7 @@ class AdminController extends Controller
      */
     public function getRepresentative($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
         $representative = Representative::find($id);

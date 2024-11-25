@@ -34,6 +34,7 @@ class UpdateProfileRequest extends FormRequest
             'birthdate' => 'nullable|date|date_format:Y-m-d',
             'birth_place' => 'nullable|string|min:3|max:100',
             'phone' => 'nullable|digits:10|unique:users,phone',
+            'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -60,6 +61,7 @@ class UpdateProfileRequest extends FormRequest
             'birthdate' => 'Birth date',
             'birth_place' => 'Birth place',
             'phone' => 'Phone number',
+            'avatar' => 'Avatar'
         ];
     }
 

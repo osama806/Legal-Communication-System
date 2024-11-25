@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LawyerController;
@@ -14,13 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
     Route::prefix("ai")->group(function () {
-        Route::get("agencies", function () {
-            $agencies = Agency::all();
-            return response([
-                'isSuccess' => true,
-                'agencies' => AgencyResource::collection($agencies)
-            ]);
-        });
+        Route::get("agencies", [AgencyController::class, "index"]);
         Route::get("lawyers", [LawyerController::class, "lawyersAI"]);
         Route::get("issues", [IssueController::class, "issuesAI"]);
         Route::get("rates", [RateController::class, "ratesAI"]);
@@ -63,6 +58,8 @@ Route::prefix("v1")->group(function () {
             Route::put('get-agencies/{id}/isolate', 'agencyIsolate');
             Route::post('{id}/send-notify-to-lawyer', 'agencyRequest');
             Route::get('{id}/notifications', 'getNotifications');
+            Route::get('get-lawyers', 'getLawyers');
+            Route::get('get-lawyers/{id}', 'getLawyer');
         });
         Route::post('get-lawyers/{id}/rating', [RateController::class, 'store'])->middleware('auth:api');
         Route::put('get-rates/{id}', [RateController::class, 'update'])->middleware('auth:api');

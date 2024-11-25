@@ -42,6 +42,8 @@ class RegisterLawyerRequest extends FormRequest
             'union_number' => 'required|unique:lawyers,union_number|digits:8',
             'years_of_experience' => 'required|integer|min:1',
             'phone' => 'required|digits:10|unique:lawyers,phone',
+            'description' => 'required|string|min:50',
+            'avatar' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -72,6 +74,8 @@ class RegisterLawyerRequest extends FormRequest
             'union_number' => 'Union number',
             'years_of_experience' => 'Years of experience',
             'phone' => 'Phone number',
+            'description' => 'Description',
+            'avatar' => 'Avatar'
         ];
     }
 

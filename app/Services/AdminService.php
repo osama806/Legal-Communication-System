@@ -2,15 +2,22 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Models\Lawyer;
 use App\Models\Representative;
-use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Auth;
 use Exception;
 use Hash;
 
 class AdminService
 {
+    protected $assetService;
+    public function __construct(AssetsService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+
     /**
      * Admin login
      * @param array $data
@@ -25,10 +32,13 @@ class AdminService
                 'code' => 400
             ];
         }
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
 
         try {
+            DB::beginTransaction();
             $admin = User::create($data);
             $admin->password = Hash::make($data["password"]);
+            $admin->avatar = $avatarResponse['url'];
             $admin->save();
 
             $admin->role()->create([
@@ -44,13 +54,19 @@ class AdminService
                     'code' => 401
                 ];
             }
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
-            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+            DB::rollBack();
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500
+            ];
         }
     }
 
@@ -61,9 +77,12 @@ class AdminService
      */
     public function signupUser(array $data)
     {
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            DB::beginTransaction();
             $user = User::create($data);
             $user->password = Hash::make($data["password"]);
+            $user->avatar = $avatarResponse['url'];
             $user->save();
 
             $user->role()->create([
@@ -82,12 +101,14 @@ class AdminService
                 ];
             }
 
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
+            DB::rollBack();
             return [
                 'status' => false,
                 'msg' => $e->getMessage(),
@@ -103,17 +124,12 @@ class AdminService
      */
     public function signupEmployee(array $data)
     {
-        if (!Auth::user()->hasRole('admin')) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized.',
-                'code' => 422
-            ];
-        }
-
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            DB::beginTransaction();
             $employee = User::create($data);
             $employee->password = Hash::make($data["password"]);
+            $employee->avatar = $avatarResponse['url'];
             $employee->save();
 
             $employee->role()->create([
@@ -132,12 +148,14 @@ class AdminService
                 ];
             }
 
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
+            DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }
@@ -149,9 +167,12 @@ class AdminService
      */
     public function signupLawyer(array $data)
     {
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            DB::beginTransaction();
             $lawyer = Lawyer::create($data);
             $lawyer->password = Hash::make($data["password"]);
+            $lawyer->avatar = $avatarResponse['url'];
             $lawyer->save();
 
             $lawyer->role()->create([
@@ -170,12 +191,14 @@ class AdminService
                 ];
             }
 
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
+            DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }
@@ -187,9 +210,12 @@ class AdminService
      */
     public function signupRepresentative(array $data)
     {
+        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            DB::beginTransaction();
             $representative = Representative::create($data);
             $representative->password = Hash::make($data["password"]);
+            $representative->avatar = $avatarResponse['url'];
             $representative->save();
 
             $representative->role()->create([
@@ -208,12 +234,14 @@ class AdminService
                 ];
             }
 
+            DB::commit();
             return [
                 'status' => true,
                 'token' => $token
             ];
 
         } catch (Exception $e) {
+            DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
     }

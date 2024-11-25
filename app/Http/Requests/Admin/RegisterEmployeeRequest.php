@@ -43,6 +43,7 @@ class RegisterEmployeeRequest extends FormRequest
             'national_number' => 'required|digits:11|unique:users,national_number',
             'gender' => 'required|string|in:male,female',
             'phone' => 'required|digits:10|unique:users,phone',
+            'avatar' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -73,6 +74,7 @@ class RegisterEmployeeRequest extends FormRequest
             'national_number' => 'National number',
             'gender' => 'Gender',
             'phone' => 'Phone number',
+            'avatar' => 'Avatar'
         ];
     }
 

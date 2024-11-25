@@ -39,6 +39,7 @@ class UpdateRepresentativeInfoRequest extends FormRequest
             'address' => 'nullable|string|min:5|max:100',
             'union_branch' => 'nullable|string|max:100',
             'union_number' => 'nullable|digits:8|unique:representatives,union_number',
+            'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -64,6 +65,7 @@ class UpdateRepresentativeInfoRequest extends FormRequest
             'address' => 'Address',
             'union_branch' => 'Union branch',
             'union_number' => 'Union number',
+            'avatar' => 'Avatar'
         ];
     }
 

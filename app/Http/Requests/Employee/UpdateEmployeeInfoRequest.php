@@ -39,6 +39,7 @@ class UpdateEmployeeInfoRequest extends FormRequest
             'birth_place' => 'nullable|string|min:3|max:100',
             'national_number' => 'nullable|digits:11|unique:users,national_number',
             'phone' => 'nullable|digits:10|unique:users,phone',
+            'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -66,6 +67,7 @@ class UpdateEmployeeInfoRequest extends FormRequest
             'birth_place' => 'Birth place',
             'national_number' => 'National number',
             'phone' => 'Phone number',
+            'avatar' => 'Avatar'
         ];
     }
 

@@ -28,7 +28,7 @@ class RateController extends Controller
      */
     public function index()
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -62,7 +62,7 @@ class RateController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
@@ -100,7 +100,7 @@ class RateController extends Controller
      */
     public function destroy($id)
     {
-        if (!Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 

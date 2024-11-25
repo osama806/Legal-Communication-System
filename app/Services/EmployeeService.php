@@ -14,6 +14,12 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class EmployeeService
 {
+    protected $assetService;
+    public function __construct(AssetsService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+
     /**
      * Update user info
      * @param array $data
@@ -42,8 +48,16 @@ class EmployeeService
                     'code' => 404
                 ];
             }
+
             $user->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $user->avatar = $avatarResponse['url'];
+                $user->save();
+            }
             return ['status' => true];
+
         } catch (Exception $e) {
             return [
                 'status' => false,
@@ -104,6 +118,12 @@ class EmployeeService
                 ];
             }
             $lawyer->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $lawyer->avatar = $avatarResponse['url'];
+                $lawyer->save();
+            }
             return ['status' => true];
         } catch (Exception $e) {
             return [
@@ -170,6 +190,12 @@ class EmployeeService
                 ];
             }
             $representative->update($filteredData);
+
+            if ($data['avatar']) {
+                $avatarResponse = $this->assetService->storeImage($data['avatar']);
+                $representative->avatar = $avatarResponse['url'];
+                $representative->save();
+            }
             return ['status' => true];
         } catch (Exception $e) {
             return [

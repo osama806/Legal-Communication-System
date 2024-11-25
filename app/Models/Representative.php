@@ -21,6 +21,7 @@ class Representative extends Authenticatable implements JWTSubject
         'address',
         'union_branch',
         'union_number',
+        'avatar',
     ];
 
     /**

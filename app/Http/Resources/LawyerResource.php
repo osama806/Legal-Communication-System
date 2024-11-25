@@ -23,10 +23,12 @@ class LawyerResource extends JsonResource
             "union_number" => $this->union_number,
             "affiliation_date" => $this->affiliation_date,
             "years_of_experience" => $this->years_of_experience,
+            "description" => $this->description,
             "phone" => $this->phone,
+            "avatar" => $this->avatar,
             'agencies' => AgencyResource::collection($this->agencies),
             'issues' => IssueResource::collection($this->issues),
-            'rates' =>  RateResource::collection($this->rates),
+            'rates' => RateResource::collection($this->rates),
         ];
     }
 }

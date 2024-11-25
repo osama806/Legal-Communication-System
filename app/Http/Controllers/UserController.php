@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateUserInfoRequest;
 use App\Http\Requests\User\RegisterUserRequest;
+use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\UserResource;
 use App\Models\Agency;
@@ -186,5 +187,35 @@ class UserController extends Controller
         $agency->is_active = false;
         $agency->save();
         return $this->getResponse('msg', 'Agency Isolated Successfully', 200);
+    }
+
+    /**
+     * Display list of lawyers
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getLawyers()
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $lawyers = Lawyer::all();
+        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
+    }
+
+    /**
+     * Display specified lawyer
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getLawyer($id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return $this->getResponse("error", "Lawyer Not Found!", 404);
+        }
+        return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
     }
 }

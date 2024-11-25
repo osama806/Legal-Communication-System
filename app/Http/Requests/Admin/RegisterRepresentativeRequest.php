@@ -39,6 +39,7 @@ class RegisterRepresentativeRequest extends FormRequest
             'address' => 'required|string|min:5|max:100',
             'union_branch' => 'required|string|max:100',
             'union_number' => 'required|unique:representatives,union_number|digits:8',
+            'avatar' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }
 
@@ -66,6 +67,7 @@ class RegisterRepresentativeRequest extends FormRequest
             'address' => 'Address',
             'union_branch' => 'Union branch',
             'union_number' => 'Union number',
+            'avatar' => 'Avatar'
         ];
     }
 

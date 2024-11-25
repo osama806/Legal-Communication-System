@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Log;
 use Auth;
 use Exception;
