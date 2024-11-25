@@ -16,7 +16,7 @@ class UsersTableSeeder extends Seeder
     {
         $faker = \Faker\Factory::create();
 
-        for ($i = 0; $i < 300; $i++) {
+        for ($i = 0; $i < 299; $i++) {
             DB::table('users')->insert([
                 'name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
@@ -28,6 +28,7 @@ class UsersTableSeeder extends Seeder
                 'national_number' => $faker->unique()->numerify('###########'), // رقم وطني مكون من 11 رقم
                 'gender' => $faker->randomElement(['male', 'female']),
                 'phone' => $faker->unique()->phoneNumber,
+                'avatar' => 'https://ui-avatars.com/api/?name=' . urlencode($faker->name) . '&size=200', // URL الصورة
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

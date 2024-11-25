@@ -23,6 +23,7 @@ class Lawyer extends Authenticatable implements JWTSubject
         'email',
         'password',
         'address',
+        'specialization_id',
         'union_branch',
         'union_number',
         'affiliation_date',

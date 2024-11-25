@@ -185,4 +185,31 @@ class EmployeeController extends Controller
             ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
+
+    /**
+     * Get employee avatar
+     * @param mixed $employeeID
+     * @param mixed $avatarID
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     */
+    public function getAvatar($employeeID, $avatarID)
+    {
+        $employee = User::where("id", $employeeID)->where("avatar", $avatarID)->first();
+        if (!$employee) {
+            return $this->getResponse("error", "Avatar Not Found", 404);
+        }
+
+        if (Auth::guard('api')->id() !== $employeeID) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+
+        $response = $this->employeeService->avatar($avatarID);
+        if ($response['status']) {
+            // Directly return the image content with headers
+            return response($response['avatar'], 200)
+                ->header('Content-Type', $response['type']);
+        } else {
+            return $this->getResponse('error', $response['msg'], $response['code']);
+        }
+    }
 }

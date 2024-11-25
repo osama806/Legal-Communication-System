@@ -21,11 +21,11 @@ class AgencyTableSeeder extends Seeder
             DB::table('agencies')->insert([
                 'sequential_number' => $faker->unique()->numerify('########'), // رقم تسلسلي فريد
                 'record_number' => $faker->unique()->numerify('########'),     // رقم السجل فريد
-                'user_id' => $faker->numberBetween(304, 605),                   // ID المستخدم من 1 إلى 300 (تأكد من وجود هذه IDs)
-                'lawyer_id' => $faker->numberBetween(1, 201),     // ID المحامي من 1 إلى 200، يمكن أن يكون فارغًا
+                'user_id' => $faker->numberBetween(2, 300),                   // ID المستخدم من 1 إلى 300 (تأكد من وجود هذه IDs)
+                'lawyer_id' => $faker->numberBetween(1, 200),     // ID المحامي من 1 إلى 200، يمكن أن يكون فارغًا
                 'representative_id' => $faker->numberBetween(1, 2), // ID الممثل من 1 إلى 100، يمكن أن يكون فارغًا
                 'place_of_issue' => $faker->city,
-                'type' => $faker->randomElement(['جنائية', 'مدنية', 'تجارية', 'عائلية']),
+                'type' => $faker->randomElement(['public', 'private', 'legitimacy']),
                 'authorizations' => $faker->paragraph,
                 'exceptions' => $faker->paragraph,
                 'cause' => $faker->sentence,

@@ -179,6 +179,11 @@ class AdminService
                 'name' => 'lawyer'
             ]);
 
+            $lawyer->specializations()->attach($data['specialization_id'], [
+                'created_at'    =>  now(),
+                'updated_at'    =>  now(),
+            ]);
+
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
             // تسجيل الدخول وتوليد التوكن
