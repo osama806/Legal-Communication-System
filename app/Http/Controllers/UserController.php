@@ -3,22 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateUserInfoRequest;
 use App\Http\Requests\User\RegisterUserRequest;
-use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\UserResource;
-use App\Models\Agency;
-use App\Models\Lawyer;
 use App\Models\User;
-use App\Services\UserService;
+use App\Http\Services\UserService;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Traits\ResponseTrait;
 use Auth;
-use Hash;
 
 class UserController extends Controller
 {
@@ -98,7 +93,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update account info
+     * Update account info by owned
      * @param \App\Http\Requests\Auth\UpdateProfileRequest $updateProfileRequest
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -111,7 +106,7 @@ class UserController extends Controller
     }
 
     /**
-     * Delete account
+     * Delete account by owned
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function destroy()
@@ -149,7 +144,7 @@ class UserController extends Controller
      * Get list of users by admin
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getUsers()
+    public function index()
     {
         $response = $this->userService->fetchAll();
         return $response['status']
@@ -162,7 +157,7 @@ class UserController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getUser($id)
+    public function show($id)
     {
         $response = $this->userService->fetchOne($id);
         return $response['status']

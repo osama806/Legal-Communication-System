@@ -4,18 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RegisterAdminRequest;
-use App\Http\Requests\Admin\RegisterEmployeeRequest;
-use App\Http\Requests\Admin\RegisterUserRequest;
-use App\Http\Requests\Admin\RegisterLawyerRequest;
-use App\Http\Requests\Admin\RegisterRepresentativeRequest;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Resources\LawyerResource;
-use App\Http\Resources\RepresentativeResource;
 use App\Http\Resources\UserResource;
-use App\Models\Lawyer;
-use App\Models\Representative;
 use App\Models\User;
-use App\Services\AdminService;
+use App\Http\Services\AdminService;
 use App\Traits\ResponseTrait;
 use Auth;
 

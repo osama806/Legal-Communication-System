@@ -7,10 +7,9 @@ use App\Http\Requests\Rate\UpdateRatingRequest;
 use App\Http\Resources\RateResource;
 use App\Models\Lawyer;
 use App\Models\Rate;
-use App\Services\RateService;
+use App\Http\Services\RateService;
 use App\Traits\ResponseTrait;
 use Auth;
-use Illuminate\Http\Request;
 
 class RateController extends Controller
 {

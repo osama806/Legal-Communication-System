@@ -6,9 +6,8 @@ use App\Http\Requests\Admin\StoreSpecializationRequest;
 use App\Http\Requests\Employee\UpdateSpecializationRequest;
 use App\Http\Resources\SpecializationResource;
 use App\Models\Specialization;
-use App\Services\SpecializationService;
+use App\Http\Services\SpecializationService;
 use App\Traits\ResponseTrait;
-use Illuminate\Http\Request;
 
 class SpecializationController extends Controller
 {

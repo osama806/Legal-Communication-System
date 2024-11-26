@@ -7,7 +7,7 @@ use Auth;
 use App\Models\User;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
-use App\Services\EmployeeService;
+use App\Http\Services\EmployeeService;
 use App\Traits\ResponseTrait;
 
 class EmployeeController extends Controller
@@ -25,7 +25,7 @@ class EmployeeController extends Controller
      * @param \App\Http\Requests\Admin\RegisterEmployeeRequest $registerRequest
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function registerEmployee(RegisterEmployeeRequest $registerRequest)
+    public function store(RegisterEmployeeRequest $registerRequest)
     {
         $response = $this->employeeService->signup($registerRequest->validated());
         return $response['status']
@@ -79,7 +79,7 @@ class EmployeeController extends Controller
      * Get list of employees by admin
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getEmployees()
+    public function index()
     {
         $response = $this->employeeService->fetchAll();
         return $response["status"]
@@ -92,7 +92,7 @@ class EmployeeController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getEmployee($id)
+    public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);

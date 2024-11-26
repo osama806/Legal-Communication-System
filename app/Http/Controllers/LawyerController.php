@@ -10,7 +10,7 @@ use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Lawyer;
 use App\Models\Representative;
-use App\Services\LawyerService;
+use App\Http\Services\LawyerService;
 use App\Traits\ResponseTrait;
 use Auth;
 
@@ -26,12 +26,12 @@ class LawyerController extends Controller
 
     /**
      * Create new lawyer by admin
-     * @param \App\Http\Requests\Admin\RegisterLawyerRequest $registerLawyerRequest
+     * @param \App\Http\Requests\Admin\RegisterLawyerRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function registerLawyer(RegisterLawyerRequest $registerLawyerRequest)
+    public function store(RegisterLawyerRequest $request)
     {
-        $response = $this->lawyerService->signupLawyer($registerLawyerRequest->validated());
+        $response = $this->lawyerService->signupLawyer($request->validated());
         return $response['status']
             ? $this->getResponse("token", $response['token'], 201)
             : $this->getResponse("error", $response['msg'], $response['code']);
@@ -81,11 +81,11 @@ class LawyerController extends Controller
     }
 
     /**
-     * Send notification to representative
+     * Agency request is accepted & send notification to representative
      * @param \App\Http\Requests\Agency\StoreLawyerForAgencyRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function sendNotificationToRep(StoreLawyerForAgencyRequest $request)
+    public function agencyAccepted(StoreLawyerForAgencyRequest $request)
     {
         $representative = Representative::find($request['representative_id']);
         $response = $this->lawyerService->send($request->validated());
@@ -105,20 +105,10 @@ class LawyerController extends Controller
     }
 
     /**
-     * Get list of lawyers forward to AI
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function lawyersAI()
-    {
-        $lawyers = Lawyer::all();
-        return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
-    }
-
-    /**
      * Display list of lawyers by admin
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getLawyers()
+    public function index()
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -133,7 +123,7 @@ class LawyerController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getLawyer($id)
+    public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -147,17 +137,17 @@ class LawyerController extends Controller
 
     /**
      * Update lawyer info by employee
-     * @param \App\Http\Requests\Employee\UpdateLawyerInfoRequest $updateLawyerRequest
+     * @param \App\Http\Requests\Employee\UpdateLawyerInfoRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function updateLawyer(UpdateLawyerInfoRequest $updateLawyerRequest, $id)
+    public function update(UpdateLawyerInfoRequest $request, $id)
     {
         $lawyer = Lawyer::find($id);
         if (!$lawyer) {
             return $this->getResponse('error', 'Lawyer Not Found!', 404);
         }
-        $response = $this->lawyerService->updateLawyer($updateLawyerRequest->validated(), $lawyer);
+        $response = $this->lawyerService->update($request->validated(), $lawyer);
         return $response['status']
             ? $this->getResponse("msg", "Lawyer updated profile successfully", 200)
             : $this->getResponse("error", $response['msg'], $response['code']);
@@ -168,13 +158,13 @@ class LawyerController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function destroyLawyer($id)
+    public function destroy($id)
     {
         $lawyer = Lawyer::find($id);
         if (!$lawyer) {
             return $this->getResponse('error', 'Lawyer Not Found!', 404);
         }
-        $response = $this->lawyerService->destroyLawyer($lawyer);
+        $response = $this->lawyerService->destroy($lawyer);
 
         return $response['status']
             ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
@@ -185,7 +175,7 @@ class LawyerController extends Controller
      * Display list of lawyers by user
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function fetchLawyers()
+    public function indexForUser()
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -200,11 +190,21 @@ class LawyerController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function fetchLawyer($id)
+    public function showForUser($id)
     {
         $response = $this->lawyerService->fetchOne($id);
         return $response['status']
             ? $this->getResponse('lawyer', new LawyerResource($response['lawyer']), 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of lawyers forward to AI
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function lawyersAI()
+    {
+        $lawyers = Lawyer::all();
+        return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
     }
 }

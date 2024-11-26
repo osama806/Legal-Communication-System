@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Services;
 
+use Hash;
 use Illuminate\Support\Facades\DB;
 use Log;
 use Auth;
@@ -106,7 +107,7 @@ class RepresentativeService
      * @param \App\Models\Representative $representative
      * @return array
      */
-    public function updateRepresentative(array $data, Representative $representative)
+    public function update(array $data, Representative $representative)
     {
         try {
             $filteredData = array_filter($data, function ($value) {
@@ -142,7 +143,7 @@ class RepresentativeService
      * @param \App\Models\Representative $representative
      * @return array
      */
-    public function destroyRepresentative(Representative $representative)
+    public function destroy(Representative $representative)
     {
         if (Auth::user()->role->name !== 'employee') {
             return [

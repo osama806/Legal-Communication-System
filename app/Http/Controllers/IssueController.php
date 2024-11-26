@@ -7,7 +7,7 @@ use App\Http\Requests\Issue\FinishIssueStatusRequest;
 use App\Http\Requests\Issue\UpdateStatusRequest;
 use App\Http\Resources\IssueResource;
 use App\Models\Issue;
-use App\Services\IssueService;
+use App\Http\Services\IssueService;
 use App\Traits\ResponseTrait;
 use Illuminate\Support\Facades\Auth;
 

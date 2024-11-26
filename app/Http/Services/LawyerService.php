@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Services;
 
 use Auth;
 use Hash;
@@ -104,7 +104,7 @@ class LawyerService
      * @param \App\Models\Lawyer $lawyer
      * @return array
      */
-    public function updateLawyer(array $data, Lawyer $lawyer)
+    public function update(array $data, Lawyer $lawyer)
     {
         try {
             $filteredData = array_filter($data, function ($value) {
@@ -140,7 +140,7 @@ class LawyerService
      * @param \App\Models\Lawyer $lawyer
      * @return array
      */
-    public function destroyLawyer(Lawyer $lawyer)
+    public function destroy(Lawyer $lawyer)
     {
         if (Auth::user()->role->name !== 'employee') {
             return [

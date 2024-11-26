@@ -10,7 +10,7 @@ use App\Http\Resources\NotificationResource;
 use App\Http\Resources\RepresentativeResource;
 use App\Models\Agency;
 use App\Models\Representative;
-use App\Services\RepresentativeService;
+use App\Http\Services\RepresentativeService;
 use App\Traits\ResponseTrait;
 use Auth;
 
@@ -25,12 +25,12 @@ class RepresentativeController extends Controller
 
     /**
      * Create new representative by admin
-     * @param \App\Http\Requests\Admin\RegisterRepresentativeRequest $registerRepresentativeRequest
+     * @param \App\Http\Requests\Admin\RegisterRepresentativeRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function registerRepresentative(RegisterRepresentativeRequest $registerRepresentativeRequest)
+    public function store(RegisterRepresentativeRequest $request)
     {
-        $response = $this->representativeService->signupRepresentative($registerRepresentativeRequest->validated());
+        $response = $this->representativeService->signupRepresentative($request->validated());
         return $response['status']
             ? $this->getResponse("token", $response['token'], 201)
             : $this->getResponse("error", $response['msg'], $response['code']);
@@ -80,11 +80,11 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Send notifications to user and lawyer both
+     * Acceptance agency coming from lawyer & send notifications to user and lawyer both
      * @param \App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function sendNotificationsToAll(StoreRepresentativeForAgencyRequest $request)
+    public function agencyAcceptance(StoreRepresentativeForAgencyRequest $request)
     {
         $response = $this->representativeService->sendResponse($request->validated());
         $agency = Agency::find($request['agency_id']);
@@ -108,7 +108,7 @@ class RepresentativeController extends Controller
      * Get list of representatives by admin
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getRepresentatives()
+    public function index()
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -123,7 +123,7 @@ class RepresentativeController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getRepresentative($id)
+    public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -137,17 +137,17 @@ class RepresentativeController extends Controller
 
     /**
      * Update representative info by employee
-     * @param \App\Http\Requests\Employee\UpdateRepresentativeInfoRequest $updateRepresentativeRequest
+     * @param \App\Http\Requests\Employee\UpdateRepresentativeInfoRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function updateRepresentative(UpdateRepresentativeInfoRequest $updateRepresentativeRequest, $id)
+    public function update(UpdateRepresentativeInfoRequest $request, $id)
     {
         $representative = Representative::find($id);
         if (!$representative) {
             return $this->getResponse('error', 'Representative Not Found!', 404);
         }
-        $response = $this->representativeService->updateRepresentative($updateRepresentativeRequest->validated(), $representative);
+        $response = $this->representativeService->update($request->validated(), $representative);
 
         return $response['status']
             ? $this->getResponse("msg", "Representative updated profile successfully", 200)
@@ -159,13 +159,13 @@ class RepresentativeController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function destroyRepresentative($id)
+    public function destroy($id)
     {
         $representative = Representative::find($id);
         if (!$representative) {
             return $this->getResponse('error', 'Representative Not Found!', 404);
         }
-        $response = $this->representativeService->destroyRepresentative($representative);
+        $response = $this->representativeService->destroy($representative);
 
         return $response['status']
             ? $this->getResponse('msg', 'Deleted Account Successfully', 200)

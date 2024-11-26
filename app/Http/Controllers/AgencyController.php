@@ -6,7 +6,7 @@ use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
 use App\Models\Lawyer;
-use App\Services\AgencyService;
+use App\Http\Services\AgencyService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Illuminate\Http\Request;
