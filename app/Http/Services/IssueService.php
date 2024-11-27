@@ -2,6 +2,8 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\IssueResource;
+use App\Traits\PaginateResourceTrait;
 use Auth;
 use Exception;
 use App\Models\Issue;
@@ -9,6 +11,30 @@ use App\Models\Agency;
 
 class IssueService
 {
+    use PaginateResourceTrait;
+
+    /**
+     * Get listing of the issues.
+     * @param array $data
+     * @return array
+     */
+    public function getList(array $data)
+    {
+        $issues = Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
+        if ($issues->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Issue!",
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
+        ];
+    }
+
     /**
      * Store a newly created issue in storage.
      * @param array $data

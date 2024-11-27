@@ -6,6 +6,8 @@ use App\Http\Requests\Admin\RegisterLawyerRequest;
 use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
+use App\Http\Requests\Lawyer\FilterForUserRequest;
+use App\Http\Requests\Lawyer\IndexFilterRequest;
 use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Lawyer;
@@ -22,6 +24,19 @@ class LawyerController extends Controller
     public function __construct(LawyerService $lawyerService)
     {
         $this->lawyerService = $lawyerService;
+    }
+
+    /**
+     * Display list of lawyers by admin
+     * @param \App\Http\Requests\Lawyer\IndexFilterRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function index(IndexFilterRequest $request)
+    {
+        $response = $this->lawyerService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['lawyers'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -105,20 +120,6 @@ class LawyerController extends Controller
     }
 
     /**
-     * Display list of lawyers by admin
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $lawyers = Lawyer::all();
-
-        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
-    }
-
-    /**
      * Display specified lawyer by admin
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
@@ -173,16 +174,15 @@ class LawyerController extends Controller
 
     /**
      * Display list of lawyers by user
+     * @param \App\Http\Requests\Lawyer\FilterForUserRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexForUser()
+    public function indexForUser(FilterForUserRequest $request)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $lawyers = Lawyer::all();
-
-        return $this->getResponse("lawyers", LawyerResource::collection($lawyers), 200);
+        $response = $this->lawyerService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['lawyers'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

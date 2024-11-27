@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Agency\FilterRequest;
 use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
@@ -22,12 +23,15 @@ class AgencyController extends Controller
 
     /**
      * Display a listing of the agencies.
+     * @param \App\Http\Requests\Agency\FilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(FilterRequest $request)
     {
-        $agencies = Agency::all();
-        return $this->getResponse('agencies', AgencyResource::collection($agencies), 200);
+        $response = $this->agencyService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['agencies'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

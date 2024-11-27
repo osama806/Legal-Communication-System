@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Issue\FilterRequest;
 use App\Http\Requests\Issue\StoreIssueRequest;
 use App\Http\Requests\Issue\FinishIssueStatusRequest;
 use App\Http\Requests\Issue\UpdateStatusRequest;
@@ -23,12 +24,15 @@ class IssueController extends Controller
 
     /**
      * Display a listing of the issues related to lawyer.
+     * @param \App\Http\Requests\Issue\FilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(FilterRequest $request)
     {
-        $issues = Issue::where('lawyer_id', Auth::guard('lawyer')->id())->get();
-        return $this->getResponse("issues", IssueResource::collection($issues), 200);
+        $response = $this->issueService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse("data", $response['issues'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

@@ -2,11 +2,11 @@
 
 namespace App\Http\Services;
 
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Auth;
 use Exception;
 use Hash;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class AdminService
 {

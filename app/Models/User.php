@@ -4,7 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Traits\AuthenticatableUser;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -43,6 +43,27 @@ class User extends Authenticatable implements JWTSubject
         });
     }
 
+    /**
+     * Filter user
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['name'])) {
+            $query->where('name', $filters['name']);
+        }
+
+        if (isset($filters['gender'])) {
+            $query->where('gender', $filters['gender']);
+        }
+
+        if (isset($filters['national_number'])) {
+            $query->where('national_number', $filters['national_number']);
+        }
+        return $query;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

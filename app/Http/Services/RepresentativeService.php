@@ -2,6 +2,8 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\RepresentativeResource;
+use App\Traits\PaginateResourceTrait;
 use Hash;
 use Illuminate\Support\Facades\DB;
 use Log;
@@ -13,13 +15,39 @@ use App\Models\Lawyer;
 use App\Models\Representative;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\RepresentativeToAllNotification;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RepresentativeService
 {
+    use PaginateResourceTrait;
     protected $assetService;
     public function __construct(AssetsService $assetService)
     {
         $this->assetService = $assetService;
+    }
+
+    /**
+     * Get list of representatives by admin
+     * @param array $data
+     * @return array
+     */
+    public function getList(array $data)
+    {
+        $representatives = Representative::filter($data)->paginate($data['per_page'] ?? 10);
+        if ($representatives->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => 'Not Found Any Representative!',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'representatives' => $this->formatPagination($representatives, RepresentativeResource::class, 'representatives')
+        ];
     }
 
     /**

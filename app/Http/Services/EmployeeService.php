@@ -2,7 +2,9 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Traits\PaginateResourceTrait;
 use Auth;
 use DB;
 use Exception;
@@ -10,6 +12,7 @@ use Hash;
 
 class EmployeeService
 {
+    use PaginateResourceTrait;
     protected $assetService;
     public function __construct(AssetsService $assetService)
     {
@@ -95,24 +98,26 @@ class EmployeeService
 
     /**
      * Get employees by admin
+     * @param array $data
      * @return array
      */
-    public function fetchAll()
+    public function getList(array $data)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        $employees = User::filter($data)->whereHas('role', function ($query) {
+            $query->where('name', 'employee');
+        })->paginate($data['per_page'] ?? 10);
+
+        if ($employees->isEmpty()) {
             return [
                 'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
+                'msg' => 'Not Found Any Employee!',
+                'code' => 404
             ];
         }
-        $employees = User::whereHas('role', function ($query) {
-            $query->where('name', 'employee');
-        })->get();
 
         return [
             'status' => true,
-            'employees' => $employees
+            'employees' => $this->formatPagination($employees, UserResource::class, 'employees')
         ];
     }
 

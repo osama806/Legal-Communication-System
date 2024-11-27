@@ -2,13 +2,38 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\RateResource;
 use App\Models\Lawyer;
 use App\Models\Rate;
+use App\Traits\PaginateResourceTrait;
 use Auth;
 use Exception;
 
 class RateService
 {
+    use PaginateResourceTrait;
+    /**
+     * Get listing of the rates
+     * @param array $data
+     * @return array
+     */
+    public function getList(array $data)
+    {
+        $rates = Rate::filter($data)->paginate($data['per_page'] ?? 10);
+        if ($rates->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => 'Not Found Any Lawyer!',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'rates' => $this->formatPagination($rates, RateResource::class, 'rates'),
+        ];
+    }
+
     /**
      * Store a newly created rating in storage.
      * @param array $data

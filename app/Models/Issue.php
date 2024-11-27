@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -63,4 +64,33 @@ class Issue extends Model
         return $this->morphMany(Attachment::class, 'relatedable');
     }
 
+    /**
+     * Filter issue
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['base_number'])) {
+            $query->where('base_number', $filters['base_number']);
+        }
+
+        if (isset($filters['record_number'])) {
+            $query->where('record_number', $filters['record_number']);
+        }
+
+        if (isset($filters['court_name'])) {
+            $query->where('court_name', $filters['court_name']);
+        }
+
+        if (isset($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        return $query;
+    }
 }

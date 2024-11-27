@@ -6,7 +6,6 @@ use App\Traits\ResponseTrait;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Log;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class AssetsService

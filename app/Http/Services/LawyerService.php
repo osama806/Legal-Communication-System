@@ -2,22 +2,51 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\LawyerResource;
+use App\Traits\PaginateResourceTrait;
 use Auth;
 use Hash;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Log;
 use Notification;
 use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Models\Representative;
 use App\Notifications\LawyerToRepresentativeNotification;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LawyerService
 {
+    use PaginateResourceTrait;
     protected $assetService;
     public function __construct(AssetsService $assetService)
     {
         $this->assetService = $assetService;
+    }
+
+    /**
+     * Get list of lawyers by admin
+     * @param array $data
+     * @return array
+     */
+    public function getList(array $data)
+    {
+        $lawyers = Lawyer::filter($data)->paginate($data['per_page'] ?? 10);
+        if ($lawyers->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => 'Not Found Any Lawyer!',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'lawyers' => $this->formatPagination($lawyers, LawyerResource::class, 'lawyers')
+        ];
     }
 
     /**

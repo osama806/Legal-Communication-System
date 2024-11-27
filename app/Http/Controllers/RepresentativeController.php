@@ -6,6 +6,7 @@ use App\Http\Requests\Admin\RegisterRepresentativeRequest;
 use App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
+use App\Http\Requests\Representative\IndexFilterRequest;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\RepresentativeResource;
 use App\Models\Agency;
@@ -21,6 +22,19 @@ class RepresentativeController extends Controller
     public function __construct(RepresentativeService $representativeService)
     {
         $this->representativeService = $representativeService;
+    }
+
+    /**
+     * Get list of representatives by admin
+     * @param \App\Http\Requests\Representative\IndexFilterRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function index(IndexFilterRequest $request)
+    {
+        $response = $this->representativeService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['representatives'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
@@ -102,20 +116,6 @@ class RepresentativeController extends Controller
     {
         $representative = Auth::guard('representative')->user();
         return $this->getResponse('notifications', NotificationResource::collection($representative->notifications), 200);
-    }
-
-    /**
-     * Get list of representatives by admin
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $representatives = Representative::all();
-
-        return $this->getResponse("representatives", RepresentativeResource::collection($representatives), 200);
     }
 
     /**

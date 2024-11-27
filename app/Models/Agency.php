@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,4 +52,29 @@ class Agency extends Model
         return $this->belongsTo(Representative::class);
     }
 
+    /**
+     * Filter agency
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['sequential_number'])) {
+            $query->where('sequential_number', $filters['sequential_number']);
+        }
+
+        if (isset($filters['record_number'])) {
+            $query->where('record_number', $filters['record_number']);
+        }
+
+        if (isset($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        return $query;
+    }
 }

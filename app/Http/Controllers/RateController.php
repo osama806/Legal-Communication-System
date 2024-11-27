@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Rate\IndexFilterRequest;
 use App\Http\Requests\Rate\StoreRatingRequest;
 use App\Http\Requests\Rate\UpdateRatingRequest;
 use App\Http\Resources\RateResource;
@@ -23,16 +24,15 @@ class RateController extends Controller
 
     /**
      * Display a listing of the rates
+     * @param \App\Http\Requests\Rate\IndexFilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(IndexFilterRequest $request)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $rates = Rate::all();
-
-        return $this->getResponse('rates', RateResource::collection($rates), 200);
+        $response = $this->rateService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['rates'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

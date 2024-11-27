@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\RegisterEmployeeRequest;
+use App\Http\Requests\Employee\IndexFilterRequest;
 use Auth;
 use App\Models\User;
 use App\Http\Requests\Auth\LoginRequest;
@@ -18,6 +19,19 @@ class EmployeeController extends Controller
     public function __construct(EmployeeService $employeeService)
     {
         $this->employeeService = $employeeService;
+    }
+
+    /**
+     * Get list of employees by admin
+     * @param \App\Http\Requests\Employee\IndexFilterRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function index(IndexFilterRequest $request)
+    {
+        $response = $this->employeeService->getList($request->validated());
+        return $response["status"]
+            ? $this->getResponse("employees", $response['employees'], 200)
+            : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -73,18 +87,6 @@ class EmployeeController extends Controller
         }
 
         return $this->getResponse("profile", new UserResource($user), 200);
-    }
-
-    /**
-     * Get list of employees by admin
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $response = $this->employeeService->fetchAll();
-        return $response["status"]
-            ? $this->getResponse("employees", UserResource::collection($response['employees']), 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
     /**

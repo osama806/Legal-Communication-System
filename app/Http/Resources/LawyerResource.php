@@ -14,6 +14,11 @@ class LawyerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Calculate the rank (average rating) safely
+        $rank = $this->rates->isNotEmpty()
+            ? $this->rates->pluck('rating')->avg()
+            : 0;
+
         return [
             "id" => $this->id,
             "name" => $this->name,
@@ -30,6 +35,7 @@ class LawyerResource extends JsonResource
             'agencies' => AgencyResource::collection($this->agencies),
             'issues' => IssueResource::collection($this->issues),
             'rates' => RateResource::collection($this->rates),
+            'rank' => round($rank, 2)
         ];
     }
 }

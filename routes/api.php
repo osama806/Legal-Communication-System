@@ -61,7 +61,7 @@ Route::prefix("v1")->group(function () {
                 Route::get('{id}/notifications', 'getNotifications');
             });
 
-            Route::post('{id}/send-notify-to-lawyer', [AgencyController::class, 'store']);
+            Route::post('send-notify-to-lawyer', [AgencyController::class, 'store']);
             Route::put('get-agencies/{id}/isolate', [AgencyController::class, 'destroy']);
             Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
             Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);

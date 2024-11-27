@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,4 +36,18 @@ class Rate extends Model
         return $this->belongsTo(Lawyer::class);
     }
 
+    /**
+     * Filter rate
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['rate'])) {
+            $query->where('rating', $filters['rate']);
+        }
+
+        return $query;
+    }
 }

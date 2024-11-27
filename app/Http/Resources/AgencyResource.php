@@ -22,6 +22,7 @@ class AgencyResource extends JsonResource
             "user_id" => $this->user_id,
             "place_of_issue" => $this->place_of_issue,
             "type" => $this->type,
+            "status"    =>  $this->status,
             "authorizations" => $this->authorizations,
             "exceptions" => $this->exceptions,
         ];

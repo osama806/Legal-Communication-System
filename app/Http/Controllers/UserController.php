@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateUserInfoRequest;
+use App\Http\Requests\User\IndexFilterRequest;
 use App\Http\Requests\User\RegisterUserRequest;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\UserResource;
@@ -62,6 +63,19 @@ class UserController extends Controller
         $response = $this->userService->updatePassword($request->validated());
         return $response['status']
             ? $this->getResponse('msg', 'Changed password successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of users by admin
+     * @param \App\Http\Requests\User\IndexFilterRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function index(IndexFilterRequest $request)
+    {
+        $response = $this->userService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('users', $response['users'], 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
@@ -138,18 +152,6 @@ class UserController extends Controller
         return $response['status']
             ? $this->getResponse("token", $response['token'], 201)
             : $this->getResponse("error", $response['msg'], $response['code']);
-    }
-
-    /**
-     * Get list of users by admin
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function index()
-    {
-        $response = $this->userService->fetchAll();
-        return $response['status']
-            ? $this->getResponse('users', UserResource::collection($response['users']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

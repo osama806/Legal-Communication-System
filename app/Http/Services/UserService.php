@@ -2,6 +2,8 @@
 
 namespace App\Http\Services;
 
+use App\Http\Resources\UserResource;
+use App\Traits\PaginateResourceTrait;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Models\User;
@@ -15,7 +17,7 @@ use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 
 class UserService
 {
-    use ResponseTrait;
+    use ResponseTrait, PaginateResourceTrait;
 
     protected $assetService;
     public function __construct(AssetsService $assetService)
@@ -184,7 +186,7 @@ class UserService
         } catch (JWTException $e) {
             Log::error('Error invalidating token: ' . $e->getMessage());
             return ['status' => false, 'msg' => 'Failed to invalidate token, please try again.', 'code' => 500];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error deleting account: ' . $e->getMessage());
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
@@ -316,25 +318,26 @@ class UserService
 
     /**
      * Get all users by admin
+     * @param array $data
      * @return array
      */
-    public function fetchAll()
+    public function getList(array $data)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        $users = User::filter($data)->whereHas('role', function ($query) {
+            $query->where('name', 'user');
+        })->paginate($data['per_page'] ?? 10);
+
+        if ($users->isEmpty()) {
             return [
                 'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
+                'msg' => 'Not Found Any User!',
+                'code' => 404
             ];
         }
 
-        $users = User::whereHas('role', function ($query) {
-            $query->where('name', 'user');
-        })->get();
-
         return [
             'status' => true,
-            'users' => $users
+            'users' => $this->formatPagination($users, UserResource::class, 'users')
         ];
     }
 

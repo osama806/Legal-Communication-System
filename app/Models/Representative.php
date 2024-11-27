@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -42,6 +43,23 @@ class Representative extends Authenticatable implements JWTSubject
         return $this->hasMany(Agency::class);
     }
 
+    /**
+     * Filter representative
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['name'])) {
+            $query->where('name', $filters['name']);
+        }
+
+        if (isset($filters['union_branch'])) {
+            $query->where('union_branch', $filters['union_branch']);
+        }
+        return $query;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

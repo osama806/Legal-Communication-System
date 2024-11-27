@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\AuthenticatableUser;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -49,6 +50,24 @@ class Lawyer extends Authenticatable implements JWTSubject
     public function issue_notes(): HasMany
     {
         return $this->hasMany(Issue_note::class);
+    }
+
+    /**
+     * Filter lawyer
+     * @param mixed $query
+     * @param mixed $filters
+     * @return \Illuminate\Contracts\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, $filters): Builder
+    {
+        if (isset($filters['name'])) {
+            $query->where('name', $filters['name']);
+        }
+
+        if (isset($filters['union_branch'])) {
+            $query->where('union_branch', $filters['union_branch']);
+        }
+        return $query;
     }
 
     /**
