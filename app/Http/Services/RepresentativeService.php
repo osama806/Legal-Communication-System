@@ -4,6 +4,7 @@ namespace App\Http\Services;
 
 use App\Http\Resources\RepresentativeResource;
 use App\Traits\PaginateResourceTrait;
+use Cache;
 use Hash;
 use Illuminate\Support\Facades\DB;
 use Log;
@@ -35,7 +36,10 @@ class RepresentativeService
      */
     public function getList(array $data)
     {
-        $representatives = Representative::filter($data)->paginate($data['per_page'] ?? 10);
+        $representatives = Cache::remember("representatives", 3600, function () use ($data) {
+            return Representative::filter($data)->paginate($data['per_page'] ?? 10);
+        });
+        
         if ($representatives->isEmpty()) {
             return [
                 'status' => false,

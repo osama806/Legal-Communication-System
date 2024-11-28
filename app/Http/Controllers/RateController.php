@@ -12,6 +12,7 @@ use App\Models\Rate;
 use App\Http\Services\RateService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class RateController extends Controller
 {
@@ -106,7 +107,9 @@ class RateController extends Controller
      */
     public function ratesAI()
     {
-        $rates = Rate::all();
+        $rates = Cache::remember('rates', 3600, function () {
+            return Rate::all();
+        });
         return $this->getResponse('rates', RateResource::collection($rates), 200);
     }
 }

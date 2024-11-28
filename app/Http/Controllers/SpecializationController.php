@@ -9,6 +9,7 @@ use App\Models\Specialization;
 use App\Http\Services\SpecializationService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class SpecializationController extends Controller
 {
@@ -28,7 +29,10 @@ class SpecializationController extends Controller
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
-        $specializations = Specialization::all();
+        $specializations = Cache::remember('specializations', 3600, function () {
+            return Specialization::all();
+        });
+        
         return $this->getResponse('specializations', SpecializationResource::collection($specializations), 200);
     }
 

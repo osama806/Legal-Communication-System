@@ -11,6 +11,7 @@ use App\Http\Resources\IssueResource;
 use App\Models\Issue;
 use App\Http\Services\IssueService;
 use App\Traits\ResponseTrait;
+use Cache;
 use Illuminate\Support\Facades\Auth;
 
 class IssueController extends Controller
@@ -56,10 +57,13 @@ class IssueController extends Controller
      */
     public function show($id)
     {
-        $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        $issue = Cache::remember('issue', 3600, function () use ($id) {
+            return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        });
         if (!$issue) {
             return $this->getResponse('error', 'Issue Not Found', 404);
         }
+
         return $this->getResponse('issue', new IssueResource($issue), 200);
     }
 
@@ -125,7 +129,10 @@ class IssueController extends Controller
      */
     public function issuesAI()
     {
-        $issues = Issue::all();
+        $issues = Cache::remember('issues', 3600, function () {
+            return Issue::all();
+        });
+
         return $this->getResponse('issues', IssueResource::collection($issues), 200);
     }
 }

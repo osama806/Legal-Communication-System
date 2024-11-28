@@ -8,6 +8,7 @@ use App\Models\Lawyer;
 use App\Notifications\UserToLawyerNotification;
 use App\Traits\PaginateResourceTrait;
 use Auth;
+use Cache;
 use Carbon\Carbon;
 use DB;
 use Exception;
@@ -24,7 +25,10 @@ class AgencyService
      */
     public function getList(array $data)
     {
-        $agencies = Agency::filter($data)->paginate($data['per_page'] ?? 10);
+        $agencies = Cache::remember('agencies', 3600, function () use ($data) {
+            return Agency::filter($data)->paginate($data['per_page'] ?? 10);
+        });
+        
         if ($agencies->isEmpty()) {
             return [
                 'status' => false,

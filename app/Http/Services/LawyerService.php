@@ -5,6 +5,7 @@ namespace App\Http\Services;
 use App\Http\Resources\LawyerResource;
 use App\Traits\PaginateResourceTrait;
 use Auth;
+use Cache;
 use Hash;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -34,7 +35,10 @@ class LawyerService
      */
     public function getList(array $data)
     {
-        $lawyers = Lawyer::filter($data)->paginate($data['per_page'] ?? 10);
+        $lawyers = Cache::remember("lawyers", 3600, function () use ($data) {
+            return Lawyer::filter($data)->paginate($data['per_page'] ?? 10);
+        });
+
         if ($lawyers->isEmpty()) {
             return [
                 'status' => false,

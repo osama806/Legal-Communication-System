@@ -17,6 +17,7 @@ use App\Models\Representative;
 use App\Http\Services\LawyerService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class LawyerController extends Controller
 {
@@ -89,7 +90,9 @@ class LawyerController extends Controller
      */
     public function profile()
     {
-        $lawyer = Lawyer::where('id', Auth::guard('lawyer')->user()->id)->first();
+        $lawyer = Cache::remember('lawyer', 3600, function () {
+            return Lawyer::where('id', Auth::guard('lawyer')->user()->id)->first();
+        });
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
@@ -206,7 +209,9 @@ class LawyerController extends Controller
      */
     public function lawyersAI()
     {
-        $lawyers = Lawyer::all();
+        $lawyers = Cache::remember('lawyers', 3600, function () {
+            return Lawyer::all();
+        });
         return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
     }
 

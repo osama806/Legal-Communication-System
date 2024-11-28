@@ -5,6 +5,7 @@ namespace App\Http\Services;
 use App\Http\Resources\IssueResource;
 use App\Traits\PaginateResourceTrait;
 use Auth;
+use Cache;
 use Exception;
 use App\Models\Issue;
 use App\Models\Agency;
@@ -20,7 +21,10 @@ class IssueService
      */
     public function getList(array $data)
     {
-        $issues = Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
+        $issues = Cache::remember("issues", 3600, function () use ($data) {
+            return Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
+        });
+
         if ($issues->isEmpty()) {
             return [
                 'status' => false,
@@ -222,7 +226,10 @@ class IssueService
      */
     public function getListForAI(array $data)
     {
-        $issues = Issue::filter($data)->paginate($data['per_page'] ?? 10);
+        $issues = Cache::remember('issues', 3600, function () use ($data) {
+            return Issue::filter($data)->paginate($data['per_page'] ?? 10);
+        });
+
         if ($issues->isEmpty()) {
             return [
                 'status' => false,

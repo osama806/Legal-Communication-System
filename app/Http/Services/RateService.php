@@ -7,6 +7,7 @@ use App\Models\Lawyer;
 use App\Models\Rate;
 use App\Traits\PaginateResourceTrait;
 use Auth;
+use Cache;
 use Exception;
 
 class RateService
@@ -19,7 +20,10 @@ class RateService
      */
     public function getList(array $data)
     {
-        $rates = Rate::filter($data)->paginate($data['per_page'] ?? 10);
+        $rates = Cache::remember("rates", 3600, function () use ($data) {
+            return Rate::filter($data)->paginate($data['per_page'] ?? 10);
+        });
+
         if ($rates->isEmpty()) {
             return [
                 'status' => false,

@@ -4,6 +4,7 @@ namespace App\Http\Services;
 
 use App\Http\Resources\UserResource;
 use App\Traits\PaginateResourceTrait;
+use Cache;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Models\User;
@@ -323,9 +324,11 @@ class UserService
      */
     public function getList(array $data)
     {
-        $users = User::filter($data)->whereHas('role', function ($query) {
-            $query->where('name', 'user');
-        })->paginate($data['per_page'] ?? 10);
+        $users = Cache::remember('users', 3600, function () use ($data) {
+            return User::filter($data)->whereHas('role', function ($query) {
+                $query->where('name', 'user');
+            })->paginate($data['per_page'] ?? 10);
+        });
 
         if ($users->isEmpty()) {
             return [

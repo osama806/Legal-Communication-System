@@ -16,6 +16,7 @@ use App\Http\Services\UserService;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class UserController extends Controller
 {
@@ -99,7 +100,9 @@ class UserController extends Controller
      */
     public function profile()
     {
-        $user = User::where('id', Auth::guard('api')->user()->id)->first();
+        $user = Cache::remember('user', 3600, function () {
+            return User::where('id', Auth::guard('api')->user()->id)->first();
+        });
         if ($user && $user->role->name !== 'user') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }

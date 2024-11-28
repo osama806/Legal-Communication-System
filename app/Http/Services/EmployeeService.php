@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Traits\PaginateResourceTrait;
 use Auth;
+use Cache;
 use DB;
 use Exception;
 use Hash;
@@ -103,9 +104,11 @@ class EmployeeService
      */
     public function getList(array $data)
     {
-        $employees = User::filter($data)->whereHas('role', function ($query) {
-            $query->where('name', 'employee');
-        })->paginate($data['per_page'] ?? 10);
+        $employees = Cache::remember('employees', 3600, function () use ($data) {
+            return User::filter($data)->whereHas('role', function ($query) {
+                return $query->where('name', 'employee');
+            })->paginate($data['per_page'] ?? 10);
+        });
 
         if ($employees->isEmpty()) {
             return [
@@ -129,7 +132,7 @@ class EmployeeService
     public function fetchOne(string $id)
     {
         $employee = User::where('id', $id)->whereHas('role', function ($query) {
-            $query->where('name', 'employee');
+            return $query->where('name', 'employee');
         })->first();
         if (!$employee) {
             return [

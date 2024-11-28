@@ -16,6 +16,7 @@ use App\Models\Representative;
 use App\Http\Services\RepresentativeService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class RepresentativeController extends Controller
 {
@@ -87,7 +88,9 @@ class RepresentativeController extends Controller
      */
     public function profile()
     {
-        $representative = Representative::where('id', Auth::guard('representative')->user()->id)->first();
+        $representative = Cache::remember('representative', 3600, function () {
+            return Representative::where('id', Auth::guard('representative')->user()->id)->first();
+        });
         if ($representative && $representative->role->name !== 'representative') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }

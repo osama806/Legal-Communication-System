@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Http\Services\AdminService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 
 class AdminController extends Controller
 {
@@ -67,7 +68,10 @@ class AdminController extends Controller
      */
     public function profile()
     {
-        $user = User::where('id', Auth::guard('api')->user()->id)->first();
+        $user = Cache::remember('user', 3600, function () {
+            return User::where('id', Auth::guard('api')->user()->id)->first();
+        });
+
         if ($user && $user->role->name !== 'admin') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }

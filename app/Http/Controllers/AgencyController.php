@@ -10,6 +10,7 @@ use App\Models\Lawyer;
 use App\Http\Services\AgencyService;
 use App\Traits\ResponseTrait;
 use Auth;
+use Cache;
 use Illuminate\Http\Request;
 
 class AgencyController extends Controller
@@ -88,7 +89,9 @@ class AgencyController extends Controller
      */
     public function agenciesAI()
     {
-        $agencies = Agency::all();
+        $agencies = Cache::remember('agencies', 3600, function () {
+            return Agency::all();
+        });
         return $this->getResponse('agencies', AgencyResource::collection($agencies), 200);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Services\EmployeeService;
 use App\Traits\ResponseTrait;
+use Cache;
 
 class EmployeeController extends Controller
 {
@@ -81,7 +82,9 @@ class EmployeeController extends Controller
      */
     public function profile()
     {
-        $user = User::where('id', Auth::guard('api')->user()->id)->first();
+        $user = Cache::remember('user', 3600, function () {
+            return User::where('id', Auth::guard('api')->user()->id)->first();
+        });
         if ($user && $user->role->name !== 'employee') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
