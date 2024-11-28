@@ -1,14 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Agency;
+namespace App\Http\Requests\Lawyer;
 
 use App\Traits\ResponseTrait;
-use Auth;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class FilterRequest extends FormRequest
+class FilterAiRequest extends FormRequest
 {
     use ResponseTrait;
     /**
@@ -16,12 +14,7 @@ class FilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
-    }
-
-    public function failedAuthorization()
-    {
-        throw new HttpResponseException($this->getResponse('error', 'This action is unauthorized', 422));
+        return true;
     }
 
     /**
@@ -33,10 +26,8 @@ class FilterRequest extends FormRequest
     {
         return [
             "per_page" => "nullable|integer|min:1",
-            'sequential_number' => 'nullable|numeric',
-            'record_number' => 'nullable|numeric',
-            'status' => 'nullable|string|in:approved,rejected',
-            'type' => 'nullable|string|in:public,private,legitimacy',
+            'name' => 'nullable|string',
+            'union_branch' => 'nullable|string',
         ];
     }
 
@@ -49,10 +40,8 @@ class FilterRequest extends FormRequest
     {
         return [
             'per_page' => 'Items per page',
-            'sequential_number' => 'Sequential number',
-            'record_number' => 'Record number',
-            'status' => 'Agency status',
-            'type' => 'Agency type'
+            'name' => 'Lawyer name',
+            'union_branch' => 'Union branch',
         ];
     }
 
@@ -60,9 +49,8 @@ class FilterRequest extends FormRequest
     {
         return [
             'integer' => 'The :attribute must be a valid integer.',
-            'min' => 'The :attribute must be at least :min characters long.',
-            'in' => ':attribute must be either "approved" or "rejected"',
-            'numeric' => 'The :attribute must be a numeric value.',
+            "string" => "The :attribute must be a string.",
+            "in" => "The selected :attribute is invalid.",
         ];
     }
 }

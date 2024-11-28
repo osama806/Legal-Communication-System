@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
     Route::prefix("ai")->group(function () {
-        Route::get("agencies", [AgencyController::class, "index"]);
+        Route::get("agencies", [AgencyController::class, "agenciesAI"]);
         Route::get("lawyers", [LawyerController::class, "lawyersAI"]);
         Route::get("issues", [IssueController::class, "issuesAI"]);
         Route::get("rates", [RateController::class, "ratesAI"]);
@@ -41,7 +41,7 @@ Route::prefix("v1")->group(function () {
             Route::apiResource("get-representatives", RepresentativeController::class)->except(["update", "destroy"]);
 
             Route::apiResource('get-rates', RateController::class)->except(['store', 'update']);
-            Route::apiResource('specializations', SpecializationController::class)->except(['update', 'destroy']);
+            Route::apiResource('get-specializations', SpecializationController::class)->except(['update', 'destroy']);
         });
     });
 
@@ -75,13 +75,29 @@ Route::prefix("v1")->group(function () {
         Route::middleware('auth:api')->group(function () {
             Route::post('auth/signout', [EmployeeController::class, 'signout']);
             Route::get('profile', [EmployeeController::class, 'profile']);
-            Route::put("get-users/{id}", [UserController::class, "updateUser"]);
-            Route::delete("get-users/{id}", [UserController::class, "destroyUser"]);
-            Route::put("get-lawyers/{id}", [LawyerController::class, "update"]);
-            Route::delete("get-lawyers/{id}", [LawyerController::class, "destroy"]);
-            Route::put("get-representatives/{id}", [RepresentativeController::class, "update"]);
-            Route::delete("get-representatives/{id}", [RepresentativeController::class, "destroy"]);
-            Route::apiResource('get-specializations', SpecializationController::class)->only(['update', 'destroy']);
+
+            Route::controller(UserController::class)->group(function () {
+                Route::get('get-users', 'indexForEmployee');
+                Route::get('get-users/{id}', 'showForEmployee');
+                Route::put("get-users/{id}", "updateUser");
+                Route::delete("get-users/{id}", "destroyUser");
+            });
+
+            Route::controller(LawyerController::class)->group(function () {
+                Route::get('get-lawyers', 'indexForEmployee');
+                Route::get('get-lawyers/{id}', 'showForEmployee');
+                Route::put("get-lawyers/{id}", "update");
+                Route::delete("get-lawyers/{id}", "destroy");
+            });
+
+            Route::controller(RepresentativeController::class)->group(function () {
+                Route::get('get-representatives', 'indexForEmployee');
+                Route::get('get-representatives/{id}', 'showForEmployee');
+                Route::put("get-representatives/{id}", "update");
+                Route::delete("get-representatives/{id}", "destroy");
+            });
+
+            Route::apiResource('fetch-specializations', SpecializationController::class)->except('store');
         });
     });
 
@@ -91,8 +107,8 @@ Route::prefix("v1")->group(function () {
             Route::controller(LawyerController::class)->group(function () {
                 Route::post('auth/signout', 'logout');
                 Route::get('profile', 'profile');
-                Route::get('{id}/notifications', 'getNotifications');
-                Route::post('{id}/send-notify-to-representative', 'agencyAccepted');
+                Route::get('notifications', 'getNotifications');
+                Route::post('send-notify-to-representative', 'agencyAccepted');
             });
 
             Route::controller(IssueController::class)->group(function () {
@@ -101,6 +117,8 @@ Route::prefix("v1")->group(function () {
             });
 
             Route::apiResource('get-issues', IssueController::class)->except(['update']);
+            Route::get('get-representatives', [RepresentativeController::class, 'indexForLawyer']);
+            Route::get('get-representatives/{id}', [RepresentativeController::class, 'showForLawyer']);
         });
     });
 

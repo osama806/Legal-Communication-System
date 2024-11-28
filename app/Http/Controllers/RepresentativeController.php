@@ -6,6 +6,8 @@ use App\Http\Requests\Admin\RegisterRepresentativeRequest;
 use App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
+use App\Http\Requests\Representative\FilterForEmployeeRequest;
+use App\Http\Requests\Representative\FilterForLawyerRequest;
 use App\Http\Requests\Representative\IndexFilterRequest;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\RepresentativeResource;
@@ -170,5 +172,65 @@ class RepresentativeController extends Controller
         return $response['status']
             ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of representatives forward to lawyer
+     * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function indexForLawyer(FilterForLawyerRequest $request)
+    {
+        $response = $this->representativeService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['representatives'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get representative info forward to lawyer
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForLawyer($id)
+    {
+        if (!Auth::guard('lawyer')->check()) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $representative = Representative::find($id);
+        if (!$representative) {
+            return $this->getResponse("error", "Representative Not Found", 404);
+        }
+        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
+    }
+
+    /**
+     * Get list of representatives forward to employee
+     * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function indexForEmployee(FilterForEmployeeRequest $request)
+    {
+        $response = $this->representativeService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['representatives'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get representative info forward to employee
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForEmployee($id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        $representative = Representative::find($id);
+        if (!$representative) {
+            return $this->getResponse("error", "Representative Not Found", 404);
+        }
+        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
     }
 }

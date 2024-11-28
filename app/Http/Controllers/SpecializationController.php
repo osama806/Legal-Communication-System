@@ -8,6 +8,7 @@ use App\Http\Resources\SpecializationResource;
 use App\Models\Specialization;
 use App\Http\Services\SpecializationService;
 use App\Traits\ResponseTrait;
+use Auth;
 
 class SpecializationController extends Controller
 {
@@ -24,12 +25,15 @@ class SpecializationController extends Controller
      */
     public function index()
     {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
         $specializations = Specialization::all();
         return $this->getResponse('specializations', SpecializationResource::collection($specializations), 200);
     }
 
     /**
-     * Store a newly created specialization in storage.
+     * Store a newly created specialization in storage by admin.
      * @param \App\Http\Requests\Admin\StoreSpecializationRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -48,6 +52,10 @@ class SpecializationController extends Controller
      */
     public function show($id)
     {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+
         $specialization = Specialization::find($id);
         if (!$specialization) {
             return $this->getResponse('error', 'Specialization Not Found!', 404);
@@ -57,7 +65,7 @@ class SpecializationController extends Controller
     }
 
     /**
-     * Update the specified specialization in storage.
+     * Update the specified specialization in storage by employee.
      * @param \App\Http\Requests\Employee\UpdateSpecializationRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
@@ -76,12 +84,16 @@ class SpecializationController extends Controller
     }
 
     /**
-     * Remove the specified specialization from storage.
+     * Remove the specified specialization from storage by employee.
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+
         $specialization = Specialization::find($id);
         if (!$specialization) {
             return $this->getResponse('error', 'Specialization Not Found!', 404);

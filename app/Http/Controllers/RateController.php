@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Rate\FilterAiRequest;
 use App\Http\Requests\Rate\IndexFilterRequest;
 use App\Http\Requests\Rate\StoreRatingRequest;
 use App\Http\Requests\Rate\UpdateRatingRequest;

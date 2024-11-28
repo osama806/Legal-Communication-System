@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Agency;
+namespace App\Http\Requests\User;
 
 use App\Traits\ResponseTrait;
 use Auth;
@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class FilterRequest extends FormRequest
+class FilterForEmployeeRequest extends FormRequest
 {
     use ResponseTrait;
     /**
@@ -16,7 +16,7 @@ class FilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('employee');
     }
 
     public function failedAuthorization()
@@ -33,10 +33,9 @@ class FilterRequest extends FormRequest
     {
         return [
             "per_page" => "nullable|integer|min:1",
-            'sequential_number' => 'nullable|numeric',
-            'record_number' => 'nullable|numeric',
-            'status' => 'nullable|string|in:approved,rejected',
-            'type' => 'nullable|string|in:public,private,legitimacy',
+            'name' => 'nullable|string',
+            'national_number' => 'nullable|numeric',
+            'gender' => 'nullable|string|in:male,female',
         ];
     }
 
@@ -49,10 +48,9 @@ class FilterRequest extends FormRequest
     {
         return [
             'per_page' => 'Items per page',
-            'sequential_number' => 'Sequential number',
-            'record_number' => 'Record number',
-            'status' => 'Agency status',
-            'type' => 'Agency type'
+            'name' => 'User name',
+            'national_number' => 'National number',
+            'gender' => 'Gender',
         ];
     }
 
@@ -60,8 +58,9 @@ class FilterRequest extends FormRequest
     {
         return [
             'integer' => 'The :attribute must be a valid integer.',
-            'min' => 'The :attribute must be at least :min characters long.',
-            'in' => ':attribute must be either "approved" or "rejected"',
+            "string" => "The :attribute must be a string.",
+            "in" => "The selected :attribute is invalid.",
+            'min' => ':attribute must be at least :min characters long.',
             'numeric' => 'The :attribute must be a numeric value.',
         ];
     }

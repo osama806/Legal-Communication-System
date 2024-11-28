@@ -28,7 +28,7 @@ class LawyerService
     }
 
     /**
-     * Get list of lawyers by admin
+     * Get list of lawyers
      * @param array $data
      * @return array
      */
@@ -200,13 +200,43 @@ class LawyerService
     }
 
     /**
-     * Get one lawyer
+     * Get one lawyer forward to user
      * @param string $id
      * @return array
      */
     public function fetchOne(string $id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $lawyer = Lawyer::find($id);
+        if (!$lawyer) {
+            return [
+                'status' => false,
+                'msg' => 'Lawyer Not Found!',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'lawyer' => $lawyer
+        ];
+    }
+
+    /**
+     * Get one lawyer forward to employee
+     * @param string $id
+     * @return array
+     */
+    public function fetchOneForEmployee(string $id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized',

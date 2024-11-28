@@ -214,4 +214,26 @@ class IssueService
         $issue->delete();
         return ['status' => true];
     }
+
+    /**
+     * Get listing of the issues.
+     * @param array $data
+     * @return array
+     */
+    public function getListForAI(array $data)
+    {
+        $issues = Issue::filter($data)->paginate($data['per_page'] ?? 10);
+        if ($issues->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Issue!",
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
+        ];
+    }
 }

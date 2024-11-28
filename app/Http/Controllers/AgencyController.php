@@ -22,7 +22,7 @@ class AgencyController extends Controller
     }
 
     /**
-     * Display a listing of the agencies.
+     * Display a listing of the agencies by admin.
      * @param \App\Http\Requests\Agency\FilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -80,5 +80,15 @@ class AgencyController extends Controller
         return $response['status']
             ? $this->getResponse('msg', 'Agency Isolated Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of agencies forward to AI
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function agenciesAI()
+    {
+        $agencies = Agency::all();
+        return $this->getResponse('agencies', AgencyResource::collection($agencies), 200);
     }
 }

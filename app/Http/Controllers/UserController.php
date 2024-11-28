@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateUserInfoRequest;
+use App\Http\Requests\User\FilterForEmployeeRequest;
 use App\Http\Requests\User\IndexFilterRequest;
 use App\Http\Requests\User\RegisterUserRequest;
 use App\Http\Resources\NotificationResource;
@@ -201,6 +202,32 @@ class UserController extends Controller
 
         return $response['status']
             ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get list of users forward to employee
+     * @param \App\Http\Requests\User\FilterForEmployeeRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function indexForEmployee(FilterForEmployeeRequest $request)
+    {
+        $response = $this->userService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('users', $response['users'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Get one user by employee
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForEmployee($id)
+    {
+        $response = $this->userService->fetchOneForEmployee($id);
+        return $response['status']
+            ? $this->getResponse('user', new UserResource($response['user']), 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }

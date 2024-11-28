@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Issue\FilterAiRequest;
 use App\Http\Requests\Issue\FilterRequest;
 use App\Http\Requests\Issue\StoreIssueRequest;
 use App\Http\Requests\Issue\FinishIssueStatusRequest;

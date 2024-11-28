@@ -317,7 +317,7 @@ class UserService
     }
 
     /**
-     * Get all users by admin
+     * Get all users
      * @param array $data
      * @return array
      */
@@ -349,6 +349,39 @@ class UserService
     public function fetchOne(string $id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $user = User::where('id', $id)->whereHas('role', function ($query) {
+            $query->where('name', 'user');
+        })->first();
+
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User Not Found',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'user' => $user
+        ];
+    }
+
+    /**
+     * Get one user by employee
+     * @param string $id
+     * @return array
+     */
+    public function fetchOneForEmployee(string $id)
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized',

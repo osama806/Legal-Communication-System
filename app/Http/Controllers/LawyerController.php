@@ -6,6 +6,8 @@ use App\Http\Requests\Admin\RegisterLawyerRequest;
 use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
+use App\Http\Requests\Lawyer\FilterAiRequest;
+use App\Http\Requests\Lawyer\FilterForEmployeeRequest;
 use App\Http\Requests\Lawyer\FilterForUserRequest;
 use App\Http\Requests\Lawyer\IndexFilterRequest;
 use App\Http\Resources\LawyerResource;
@@ -206,5 +208,31 @@ class LawyerController extends Controller
     {
         $lawyers = Lawyer::all();
         return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
+    }
+
+    /**
+     * Display list of lawyers by employee
+     * @param \App\Http\Requests\Lawyer\FilterForEmployeeRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function indexForEmployee(FilterForEmployeeRequest $request)
+    {
+        $response = $this->lawyerService->getList($request->validated());
+        return $response['status']
+            ? $this->getResponse('data', $response['lawyers'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Display specified lawyer by employee
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForEmployee($id)
+    {
+        $response = $this->lawyerService->fetchOneForEmployee($id);
+        return $response['status']
+            ? $this->getResponse('lawyer', new LawyerResource($response['lawyer']), 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }
