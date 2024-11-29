@@ -53,6 +53,15 @@ class Agency extends Model
     }
 
     /**
+     * Defines a one-to-one relationship with the Issue model.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function issue(): BelongsTo
+    {
+        return $this->belongsTo(Issue::class);
+    }
+
+    /**
      * Filter agency
      * @param mixed $query
      * @param mixed $filters

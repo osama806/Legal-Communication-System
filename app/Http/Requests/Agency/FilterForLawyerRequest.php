@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class FilterRequest extends FormRequest
+class FilterForLawyerRequest extends FormRequest
 {
     use ResponseTrait;
     /**
@@ -16,7 +16,7 @@ class FilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('user');
+        return Auth::guard('lawyer')->check();
     }
 
     public function failedAuthorization()

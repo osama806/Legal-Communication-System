@@ -21,7 +21,7 @@ class IssueService
      */
     public function getList(array $data)
     {
-        $issues = Cache::remember("issues", 3600, function () use ($data) {
+        $issues = Cache::remember("issues", 1200, function () use ($data) {
             return Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
         });
 
@@ -46,7 +46,10 @@ class IssueService
      */
     public function storeIssue(array $data)
     {
-        $agency = Agency::find($data["agency_id"]);
+        $agency = Cache::remember('agency' . $data["agency_id"], 600, function () use ($data) {
+            return Agency::find($data["agency_id"]);
+        });
+
         if ((!$agency->is_active && $agency->status === 'pending') || $agency->status === 'rejected') {
             return [
                 'status' => false,
@@ -54,6 +57,7 @@ class IssueService
                 'code' => 404
             ];
         }
+
         if (!$agency->is_active) {
             return [
                 'status' => false,
@@ -74,6 +78,7 @@ class IssueService
                 "estimated_cost" => $data['estimated_cost'],
             ]);
 
+            Cache::forget('issues');
             return ['status' => true];
         } catch (Exception $exception) {
             return [
@@ -93,7 +98,10 @@ class IssueService
     public function endIssue(array $data, Issue $issue)
     {
         try {
-            $agency = Agency::find($issue->agency_id);
+            $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+                return Agency::find($issue->agency_id);
+            });
+
             if (!$agency->is_active) {
                 return [
                     'status' => false,
@@ -141,6 +149,8 @@ class IssueService
             $issue->update($filteredData);
             $issue->is_active = false;
             $issue->save();
+
+            Cache::forget('issue' . $issue->id);
             return ['status' => true];
 
         } catch (Exception $exception) {
@@ -161,7 +171,10 @@ class IssueService
     public function changeStatus(array $data, Issue $issue)
     {
         try {
-            $agency = Agency::find($issue->agency_id);
+            $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+                return Agency::find($issue->agency_id);
+            });
+
             if (!$agency->is_active) {
                 return [
                     'status' => false,
@@ -180,6 +193,8 @@ class IssueService
 
             $issue->status = $data['status'];
             $issue->save();
+
+            Cache::forget('issue' . $issue->id);
             return ['status' => true];
 
         } catch (Exception $exception) {
@@ -196,8 +211,17 @@ class IssueService
      * @param \App\Models\Issue $issue
      * @return array
      */
-    public function removeIssue(Issue $issue)
+    public function removeIssue(string $id)
     {
+        if (Auth::guard('lawyer')->check() && Auth::guard('lawyer')->user()->role->name !== 'lawyer') {
+            return [
+                'status' => false,
+                'msg' => 'This action is unauthorized',
+                'code' => 422
+            ];
+        }
+
+        $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         if (!$issue) {
             return [
                 'status' => false,
@@ -206,7 +230,10 @@ class IssueService
             ];
         }
 
-        $agency = Agency::find($issue->agency_id);
+        $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+            return Agency::find($issue->agency_id);
+        });
+
         if (!$agency->is_active) {
             return [
                 'status' => false,
@@ -216,17 +243,48 @@ class IssueService
         }
 
         $issue->delete();
+        Cache::forget('issues');
         return ['status' => true];
     }
 
     /**
-     * Get listing of the issues.
+     * Get listing of the issues related to user.
      * @param array $data
      * @return array
      */
-    public function getListForAI(array $data)
+    public function getListForUser(array $data)
     {
-        $issues = Cache::remember('issues', 3600, function () use ($data) {
+        $issues = Cache::remember("issuesUser" . Auth::guard('api')->id(), 1200, function () use ($data) {
+            return Issue::whereHas('agency', function ($query) {
+                $query->where('user_id', Auth::guard('api')->id());
+            })
+                ->with('agency')
+                ->filter($data)
+                ->paginate($data['per_page'] ?? 10);
+        });
+
+        if ($issues->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Issue!",
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
+        ];
+    }
+
+    /**
+     * Get listing of the issues forward to admin and employee.
+     * @param array $data
+     * @return array
+     */
+    public function AdminAndEmployee(array $data)
+    {
+        $issues = Cache::remember("issuesAdminEmployee", 1200, function () use ($data) {
             return Issue::filter($data)->paginate($data['per_page'] ?? 10);
         });
 

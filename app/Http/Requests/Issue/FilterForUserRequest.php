@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Agency;
+namespace App\Http\Requests\Issue;
 
 use App\Traits\ResponseTrait;
 use Auth;
@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class FilterRequest extends FormRequest
+class FilterForUserRequest extends FormRequest
 {
     use ResponseTrait;
     /**
@@ -16,7 +16,7 @@ class FilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('user');
+        return Auth::guard("api")->check() && Auth::guard("api")->user()->hasRole('user');
     }
 
     public function failedAuthorization()
@@ -33,26 +33,28 @@ class FilterRequest extends FormRequest
     {
         return [
             "per_page" => "nullable|integer|min:1",
-            'sequential_number' => 'nullable|numeric',
-            'record_number' => 'nullable|numeric',
-            'status' => 'nullable|string|in:approved,rejected',
-            'type' => 'nullable|string|in:public,private,legitimacy',
+            'base_number' => 'nullable|string',
+            'record_number' => 'nullable|string',
+            "court_name" => "nullable|string|in:cassation,reconciliation,beginning,appeal,commercial,banking,arbitration,reconciliation_penalty,start_penalty,misdemeanor_appeal,felonies,islamic,christianity,administrative_disputes,international_disputes,military_judiciary,terrorism",
+            "type" => "nullable|string|in:legitimacy,civil,penal,administrative,commercial,terrorism,military,arbitration,international_disputes",
+            'status' => 'nullable|string',
         ];
     }
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->getResponse('errors', $validator->errors(), 400));
+        throw new ValidationException($validator, $this->getResponse('errors', $validator->errors(), 401));
     }
 
     public function attributes()
     {
         return [
             'per_page' => 'Items per page',
-            'sequential_number' => 'Sequential number',
-            'record_number' => 'Record number',
-            'status' => 'Agency status',
-            'type' => 'Agency type'
+            "base_number" => "Base number",
+            "record_number" => "Record number",
+            "court_name" => "Court name",
+            "type" => "Issue type",
+            "status" => "Issue status",
         ];
     }
 
@@ -60,9 +62,8 @@ class FilterRequest extends FormRequest
     {
         return [
             'integer' => 'The :attribute must be a valid integer.',
-            'min' => 'The :attribute must be at least :min characters long.',
-            'in' => ':attribute must be either "approved" or "rejected"',
-            'numeric' => 'The :attribute must be a numeric value.',
+            "string" => "The :attribute must be a string.",
+            "in" => "The selected :attribute is invalid.",
         ];
     }
 }

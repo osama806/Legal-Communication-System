@@ -25,10 +25,10 @@ class AgencyService
      */
     public function getList(array $data)
     {
-        $agencies = Cache::remember('agencies', 3600, function () use ($data) {
+        $agencies = Cache::remember('agencies', 1200, function () use ($data) {
             return Agency::filter($data)->paginate($data['per_page'] ?? 10);
         });
-        
+
         if ($agencies->isEmpty()) {
             return [
                 'status' => false,
@@ -50,7 +50,10 @@ class AgencyService
      */
     public function createAgency(array $data)
     {
-        $lawyer = Lawyer::find($data["lawyer_id"]);
+        $lawyer = Cache::remember('lawyer' . $data["lawyer_id"], 600, function () use ($data) {
+            return Lawyer::find($data["lawyer_id"]);
+        });
+
         try {
             // تحقق من عدد الطلبات التي قام بها المستخدم في اليوم الحالي
             $userId = Auth::guard('api')->id();
@@ -58,8 +61,8 @@ class AgencyService
                 ->whereDate('created_at', Carbon::today())
                 ->count();
 
+            // إذا تجاوز المستخدم ثلاثة طلبات في نفس اليوم، قم بإرجاع رسالة
             if ($todayRequestsCount >= 3) {
-                // إذا تجاوز المستخدم ثلاثة طلبات في نفس اليوم، قم بإرجاع رسالة
                 return [
                     'status' => false,
                     'msg' => "You have exceeded your limit for requesting agencies today. Please try again tomorrow.",
@@ -77,9 +80,11 @@ class AgencyService
             Notification::send($lawyer, new UserToLawyerNotification($agency));
             DB::commit();
 
-            return [
-                'status' => true,
-            ];
+            Cache::forget('agencies');
+            Cache::forget('agenciesForUser');
+            Cache::forget('agenciesForLawyer');
+            Cache::forget('agenciesForRepresentative');
+            return ['status' => true];
         } catch (Exception $e) {
             DB::rollBack();
             return [
@@ -115,8 +120,86 @@ class AgencyService
 
         $agency->is_active = false;
         $agency->save();
+
+        Cache::forget('agencies');
+        Cache::forget('agenciesForUser');
+        Cache::forget('agenciesForLawyer');
+        Cache::forget('agenciesForRepresentative');
+        return ['status' => true];
+    }
+
+    /**
+     * Get listing of the agencies related to user.
+     * @param array $data
+     * @return array
+     */
+    public function getListForUser(array $data)
+    {
+        $agencies = Cache::remember('agenciesForUser', 1200, function () use ($data) {
+            return Agency::filter($data)->where('user_id', Auth::guard('api')->id())->paginate($data['per_page'] ?? 10);
+        });
+
+        if ($agencies->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Agency!",
+                'code' => 404
+            ];
+        }
+
         return [
             'status' => true,
+            'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
+        ];
+    }
+
+    /**
+     * Get listing of the agencies related to lawyer.
+     * @param array $data
+     * @return array
+     */
+    public function getListForLawyer(array $data)
+    {
+        $agencies = Cache::remember('agenciesForLawyer', 1200, function () use ($data) {
+            return Agency::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
+        });
+
+        if ($agencies->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Agency!",
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
+        ];
+    }
+
+    /**
+     * Get listing of the agencies related to representative.
+     * @param array $data
+     * @return array
+     */
+    public function getListForRepresentative(array $data)
+    {
+        $agencies = Cache::remember('agenciesForRepresentative', 1200, function () use ($data) {
+            return Agency::filter($data)->where('representative_id', Auth::guard('representative')->id())->paginate($data['per_page'] ?? 10);
+        });
+
+        if ($agencies->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Agency!",
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
         ];
     }
 }

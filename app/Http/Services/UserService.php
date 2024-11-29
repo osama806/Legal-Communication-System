@@ -58,6 +58,7 @@ class UserService
             }
 
             DB::commit();
+            Cache::forget('users');
             return [
                 'status' => true,
                 'token' => $token
@@ -130,6 +131,8 @@ class UserService
                 $user->avatar = $avatarResponse['url'];
                 $user->save();
             }
+
+            Cache::forget('user' . $user->id);
             return ['status' => true];
         } catch (Exception $e) {
 
@@ -162,7 +165,7 @@ class UserService
         // Update the user's password
         $user->password = Hash::make($data['new_password']);
         $user->save();
-
+        Cache::forget('user' . $user->id);
         return ['status' => true];
     }
 
@@ -179,6 +182,7 @@ class UserService
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
             $user->delete();
+            Cache::forget('users');
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
@@ -225,6 +229,7 @@ class UserService
             }
 
             DB::commit();
+            Cache::forget('users');
             return [
                 'status' => true,
                 'token' => $token
@@ -276,6 +281,7 @@ class UserService
                 $user->avatar = $avatarResponse['url'];
                 $user->save();
             }
+            Cache::forget('user' . $user->id);
             return ['status' => true];
 
         } catch (Exception $e) {
@@ -303,6 +309,7 @@ class UserService
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
             $user->delete();
+            Cache::forget('users');
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
@@ -324,7 +331,7 @@ class UserService
      */
     public function getList(array $data)
     {
-        $users = Cache::remember('users', 3600, function () use ($data) {
+        $users = Cache::remember('users', 1200, function () use ($data) {
             return User::filter($data)->whereHas('role', function ($query) {
                 $query->where('name', 'user');
             })->paginate($data['per_page'] ?? 10);
@@ -359,9 +366,11 @@ class UserService
             ];
         }
 
-        $user = User::where('id', $id)->whereHas('role', function ($query) {
-            $query->where('name', 'user');
-        })->first();
+        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+            return User::where('id', $id)->whereHas('role', function ($query) {
+                $query->where('name', 'user');
+            })->first();
+        });
 
         if (!$user) {
             return [
@@ -392,9 +401,11 @@ class UserService
             ];
         }
 
-        $user = User::where('id', $id)->whereHas('role', function ($query) {
-            $query->where('name', 'user');
-        })->first();
+        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+            return User::where('id', $id)->whereHas('role', function ($query) {
+                $query->where('name', 'user');
+            })->first();
+        });
 
         if (!$user) {
             return [

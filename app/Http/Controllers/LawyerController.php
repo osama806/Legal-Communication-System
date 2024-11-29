@@ -6,7 +6,6 @@ use App\Http\Requests\Admin\RegisterLawyerRequest;
 use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
-use App\Http\Requests\Lawyer\FilterAiRequest;
 use App\Http\Requests\Lawyer\FilterForEmployeeRequest;
 use App\Http\Requests\Lawyer\FilterForUserRequest;
 use App\Http\Requests\Lawyer\IndexFilterRequest;
@@ -90,8 +89,8 @@ class LawyerController extends Controller
      */
     public function profile()
     {
-        $lawyer = Cache::remember('lawyer', 3600, function () {
-            return Lawyer::where('id', Auth::guard('lawyer')->user()->id)->first();
+        $lawyer = Cache::remember('lawyer' . Auth::guard('lawyer')->id(), 600, function () {
+            return Lawyer::where('id', Auth::guard('lawyer')->id())->first();
         });
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -107,7 +106,9 @@ class LawyerController extends Controller
      */
     public function agencyAccepted(StoreLawyerForAgencyRequest $request)
     {
-        $representative = Representative::find($request['representative_id']);
+        $representative = Cache::remember("representative" . Auth::guard("representative")->id(), 600, function () use ($request) {
+            return Representative::find($request['representative_id']);
+        });
         $response = $this->lawyerService->send($request->validated());
         return $response['status']
             ? $this->getResponse('msg', 'Send request to representative ' . $representative->name, 200)
@@ -134,7 +135,9 @@ class LawyerController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
         if (!$lawyer) {
             return $this->getResponse("error", "Lawyer Not Found!", 404);
         }
@@ -149,7 +152,9 @@ class LawyerController extends Controller
      */
     public function update(UpdateLawyerInfoRequest $request, $id)
     {
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
         if (!$lawyer) {
             return $this->getResponse('error', 'Lawyer Not Found!', 404);
         }
@@ -166,7 +171,9 @@ class LawyerController extends Controller
      */
     public function destroy($id)
     {
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
         if (!$lawyer) {
             return $this->getResponse('error', 'Lawyer Not Found!', 404);
         }
@@ -209,7 +216,7 @@ class LawyerController extends Controller
      */
     public function lawyersAI()
     {
-        $lawyers = Cache::remember('lawyers', 3600, function () {
+        $lawyers = Cache::remember('lawyers', 1200, function () {
             return Lawyer::all();
         });
         return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);

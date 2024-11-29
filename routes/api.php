@@ -32,14 +32,13 @@ Route::prefix("v1")->group(function () {
             });
 
             Route::post("signup-user", [UserController::class, "registerUser"]);
+            Route::get("get-issues", [IssueController::class, "getForAdminAndEmployee"]);
+            Route::get("get-issues/{id}", [IssueController::class, "showForAdminAndEmployee"]);
             Route::apiResource("get-users", UserController::class)->only(["index", "show"]);
-
             Route::apiResource("get-employees", EmployeeController::class)->except(["update", "destroy"]);
-
             Route::apiResource("get-lawyers", LawyerController::class)->except(["update", "destroy"]);
-
             Route::apiResource("get-representatives", RepresentativeController::class)->except(["update", "destroy"]);
-
+            Route::apiResource('get-agencies', AgencyController::class)->only(['index', 'show']);
             Route::apiResource('get-rates', RateController::class)->except(['store', 'update']);
             Route::apiResource('get-specializations', SpecializationController::class)->except(['update', 'destroy']);
         });
@@ -61,12 +60,19 @@ Route::prefix("v1")->group(function () {
                 Route::get('{id}/notifications', 'getNotifications');
             });
 
-            Route::post('send-notify-to-lawyer', [AgencyController::class, 'store']);
-            Route::put('get-agencies/{id}/isolate', [AgencyController::class, 'destroy']);
+            Route::controller(AgencyController::class)->group(function () {
+                Route::post('send-notify-to-lawyer', 'store');
+                Route::put('get-agencies/{id}/isolate', 'destroy');
+                Route::get('get-agencies', 'indexForUser');
+                Route::get('get-agencies/{id}', 'showForUser');
+            });
+
             Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
             Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);
             Route::post('get-lawyers/{id}/rating', [RateController::class, 'store']);
             Route::put('get-rates/{id}', [RateController::class, 'update']);
+            Route::get('get-issues', [IssueController::class, 'indexForUser']);
+            Route::get('get-issues/{id}', [IssueController::class, 'showForUser']);
         });
     });
 
@@ -98,6 +104,8 @@ Route::prefix("v1")->group(function () {
             });
 
             Route::apiResource('fetch-specializations', SpecializationController::class)->except('store');
+            Route::get("get-issues", [IssueController::class, "getForAdminAndEmployee"]);
+            Route::get("get-issues/{id}", [IssueController::class, "showForAdminAndEmployee"]);
         });
     });
 
@@ -119,6 +127,8 @@ Route::prefix("v1")->group(function () {
             Route::apiResource('get-issues', IssueController::class)->except(['update']);
             Route::get('get-representatives', [RepresentativeController::class, 'indexForLawyer']);
             Route::get('get-representatives/{id}', [RepresentativeController::class, 'showForLawyer']);
+            Route::get('get-agencies', [AgencyController::class, 'indexForLawyer']);
+            Route::get('get-agencies/{id}', [AgencyController::class, 'showForLawyer']);
         });
     });
 
@@ -129,6 +139,10 @@ Route::prefix("v1")->group(function () {
             Route::get('profile', 'profile');
             Route::get('{id}/notifications', 'getNotifications');
             Route::post('{id}/send-notify-to-all', 'agencyAcceptance');
+        });
+        Route::middleware('auth:representative')->controller(AgencyController::class)->group(function () {
+            Route::get('get-agencies', 'indexForRepresentative');
+            Route::get('get-agencies/{id}', 'showForRepresentative');
         });
     });
 });

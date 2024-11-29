@@ -3,10 +3,12 @@
 namespace App\Http\Requests\Issue;
 
 use App\Traits\ResponseTrait;
+use Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
-class FilterAiRequest extends FormRequest
+class FilterForAdminAndEmployee extends FormRequest
 {
     use ResponseTrait;
     /**
@@ -14,7 +16,12 @@ class FilterAiRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::guard("api")->check() && !Auth::guard("api")->user()->hasRole('user');
+    }
+
+    public function failedAuthorization()
+    {
+        throw new HttpResponseException($this->getResponse('error', 'This action is unauthorized', 422));
     }
 
     /**

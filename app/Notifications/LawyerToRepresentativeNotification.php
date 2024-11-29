@@ -36,7 +36,7 @@ class LawyerToRepresentativeNotification extends Notification
             'agency_number' => $this->agency->id,
             'from' => 'Lawyer ' . $this->agency->lawyer->name,
             'to' => 'Representative ' . $this->agency->representative->name,
-            'message' => "You have new agency request",
+            'message' => "You have new agency request. Cause is " . $this->agency->cause,
         ];
     }
 

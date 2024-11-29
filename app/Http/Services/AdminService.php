@@ -3,6 +3,7 @@
 namespace App\Http\Services;
 
 use Auth;
+use Cache;
 use Exception;
 use Hash;
 use App\Models\User;
@@ -53,6 +54,8 @@ class AdminService
                 ];
             }
             DB::commit();
+
+            Cache::forget('users');
             return [
                 'status' => true,
                 'token' => $token

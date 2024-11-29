@@ -35,7 +35,7 @@ class LawyerService
      */
     public function getList(array $data)
     {
-        $lawyers = Cache::remember("lawyers", 3600, function () use ($data) {
+        $lawyers = Cache::remember("lawyers", 1200, function () use ($data) {
             return Lawyer::filter($data)->paginate($data['per_page'] ?? 10);
         });
 
@@ -90,6 +90,7 @@ class LawyerService
             }
 
             DB::commit();
+            Cache::forget('lawyers');
             return [
                 'status' => true,
                 'token' => $token
@@ -108,8 +109,14 @@ class LawyerService
      */
     public function send(array $data)
     {
-        $agency = Agency::find($data['agency_id']);
-        $representative = Representative::find($data['representative_id']);
+        $agency = Cache::remember('agency' . $data['agency_id'], 600, function () use ($data) {
+            return Agency::find($data['agency_id']);
+        });
+
+        $representative = Cache::remember('representative' . $data['representative_id'], 600, function () use ($data) {
+            return Representative::find($data['representative_id']);
+        });
+
         try {
             DB::beginTransaction();
             $agency->representative_id = $data['representative_id'];
@@ -120,6 +127,7 @@ class LawyerService
             Notification::send($representative, new LawyerToRepresentativeNotification($agency));
             DB::commit();
 
+            Cache::forget('agency' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
             DB::rollBack();
@@ -151,6 +159,7 @@ class LawyerService
                     'code' => 404
                 ];
             }
+
             $lawyer->update($filteredData);
 
             if ($data['avatar']) {
@@ -158,6 +167,8 @@ class LawyerService
                 $lawyer->avatar = $avatarResponse['url'];
                 $lawyer->save();
             }
+
+            Cache::forget('lawyers');
             return ['status' => true];
         } catch (Exception $e) {
             return [
@@ -189,6 +200,8 @@ class LawyerService
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
             $lawyer->delete();
+
+            Cache::forget('lawyers');
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
@@ -218,7 +231,10 @@ class LawyerService
             ];
         }
 
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
+
         if (!$lawyer) {
             return [
                 'status' => false,
@@ -248,7 +264,9 @@ class LawyerService
             ];
         }
 
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
         if (!$lawyer) {
             return [
                 'status' => false,

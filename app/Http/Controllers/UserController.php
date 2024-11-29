@@ -100,8 +100,8 @@ class UserController extends Controller
      */
     public function profile()
     {
-        $user = Cache::remember('user', 3600, function () {
-            return User::where('id', Auth::guard('api')->user()->id)->first();
+        $user = Cache::remember('user' . Auth::guard('api')->id(), 600, function () {
+            return User::where('id', Auth::guard('api')->id())->first();
         });
         if ($user && $user->role->name !== 'user') {
             return $this->getResponse('error', 'This action is unauthorized', 422);
@@ -173,17 +173,19 @@ class UserController extends Controller
 
     /**
      * Update user account by employee
-     * @param \App\Http\Requests\Employee\UpdateUserInfoRequest $updateUserInfoRequest
+     * @param \App\Http\Requests\Employee\UpdateUserInfoRequest $request
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function updateUser(UpdateUserInfoRequest $updateUserInfoRequest, $id)
+    public function updateUser(UpdateUserInfoRequest $request, $id)
     {
-        $user = User::find($id);
+        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+            return User::find($id);
+        });
         if (!$user) {
             return $this->getResponse('error', 'User Not Found!', 404);
         }
-        $response = $this->userService->updateUser($updateUserInfoRequest->validated(), $user);
+        $response = $this->userService->updateUser($request->validated(), $user);
 
         return $response['status']
             ? $this->getResponse("msg", "Updated user profile successfully", 200)
@@ -197,7 +199,9 @@ class UserController extends Controller
      */
     public function destroyUser($id)
     {
-        $user = User::find($id);
+        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+            return User::find($id);
+        });
         if (!$user) {
             return $this->getResponse('error', 'User Not Found!', 404);
         }

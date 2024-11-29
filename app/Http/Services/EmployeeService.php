@@ -52,6 +52,7 @@ class EmployeeService
             }
 
             DB::commit();
+            Cache::forget('employees');
             return [
                 'status' => true,
                 'token' => $token,
@@ -104,7 +105,7 @@ class EmployeeService
      */
     public function getList(array $data)
     {
-        $employees = Cache::remember('employees', 3600, function () use ($data) {
+        $employees = Cache::remember('employees', 1200, function () use ($data) {
             return User::filter($data)->whereHas('role', function ($query) {
                 return $query->where('name', 'employee');
             })->paginate($data['per_page'] ?? 10);
@@ -131,9 +132,12 @@ class EmployeeService
      */
     public function fetchOne(string $id)
     {
-        $employee = User::where('id', $id)->whereHas('role', function ($query) {
-            return $query->where('name', 'employee');
-        })->first();
+        $employee = Cache::remember('employee' . $id, 600, function () use ($id) {
+            return User::where('id', $id)->whereHas('role', function ($query) {
+                return $query->where('name', 'employee');
+            })->first();
+        });
+
         if (!$employee) {
             return [
                 'status' => false,

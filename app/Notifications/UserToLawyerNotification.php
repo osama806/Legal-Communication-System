@@ -34,7 +34,7 @@ class UserToLawyerNotification extends Notification
             'agency_number' => $this->agency->id,
             'from' => 'User ' . $this->agency->user->name,
             'to' => 'Lawyer ' . $this->agency->lawyer->name,
-            'message' => "You have new agency request",
+            'message' => "You have new agency request. Cause is " . $this->agency->cause,
         ];
     }
 

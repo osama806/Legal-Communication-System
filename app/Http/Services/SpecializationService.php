@@ -3,6 +3,7 @@
 namespace App\Http\Services;
 
 use App\Models\Specialization;
+use Cache;
 use Exception;
 
 class SpecializationService
@@ -16,6 +17,8 @@ class SpecializationService
     {
         try {
             Specialization::create($data);
+
+            Cache::forget("specializations");
             return [
                 'status' => true,
             ];
@@ -50,6 +53,7 @@ class SpecializationService
             }
 
             $specialization->update($filteredData);
+            Cache::forget('specialization' . $specialization->id);
             return ['status' => true];
 
         } catch (Exception $e) {
@@ -60,5 +64,4 @@ class SpecializationService
             ];
         }
     }
-
 }

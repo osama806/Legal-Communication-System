@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Issue\FilterAiRequest;
+use App\Http\Requests\Issue\FilterForAdminAndEmployee;
+use App\Http\Requests\Issue\FilterForUserRequest;
 use App\Http\Requests\Issue\FilterRequest;
 use App\Http\Requests\Issue\StoreIssueRequest;
 use App\Http\Requests\Issue\FinishIssueStatusRequest;
@@ -51,13 +52,13 @@ class IssueController extends Controller
     }
 
     /**
-     * Display the specified issue.
+     * Display the specified issue by lawyer.
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        $issue = Cache::remember('issue', 3600, function () use ($id) {
+        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
@@ -75,7 +76,9 @@ class IssueController extends Controller
      */
     public function updateStatus(UpdateStatusRequest $request, $id)
     {
-        $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
+            return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        });
         if (!$issue) {
             return $this->getResponse('error', 'Issue Not Found', 404);
         }
@@ -94,7 +97,9 @@ class IssueController extends Controller
      */
     public function endIssue(FinishIssueStatusRequest $request, $id)
     {
-        $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
+            return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
+        });
         if (!$issue) {
             return $this->getResponse('error', 'Issue Not Found', 404);
         }
@@ -112,12 +117,7 @@ class IssueController extends Controller
      */
     public function destroy($id)
     {
-        if (Auth::guard('lawyer')->check() && Auth::guard('lawyer')->user()->role->name !== 'lawyer') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
-        }
-        $issue = Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
-
-        $response = $this->issueService->removeIssue($issue);
+        $response = $this->issueService->removeIssue($id);
         return $response['status']
             ? $this->getResponse('msg', 'Deleted Issue Successfully', 200)
             : $this->getResponse('error', $response['msg'], $response['code']);
@@ -129,10 +129,76 @@ class IssueController extends Controller
      */
     public function issuesAI()
     {
-        $issues = Cache::remember('issues', 3600, function () {
+        $issues = Cache::remember('issues', 1200, function () {
             return Issue::all();
         });
 
         return $this->getResponse('issues', IssueResource::collection($issues), 200);
+    }
+
+    /**
+     * Display a listing of the issues related to user.
+     * @param \App\Http\Requests\Issue\FilterForUserRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function indexForUser(FilterForUserRequest $request)
+    {
+        $response = $this->issueService->getListForUser($request->validated());
+        return $response['status']
+            ? $this->getResponse("data", $response['issues'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Display the specified issue related to user.
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForUser($id)
+    {
+        $issue = Cache::remember('issueUser' . Auth::guard('api')->id(), 600, function () use ($id) {
+            return Issue::whereHas('agency', function ($query) {
+                return $query->where('user_id', Auth::guard('api')->id());
+            })->with('agency')->find($id);
+        });
+        if (!$issue) {
+            return $this->getResponse('error', 'Issue Not Found', 404);
+        }
+
+        return $this->getResponse('issue', new IssueResource($issue), 200);
+    }
+
+    /**
+     * Get listing of the issues by admin and employee
+     * @param \App\Http\Requests\Issue\FilterForAdminAndEmployee $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getForAdminAndEmployee(FilterForAdminAndEmployee $request)
+    {
+        $response = $this->issueService->AdminAndEmployee($request->validated());
+        return $response['status']
+            ? $this->getResponse("data", $response['issues'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
+    /**
+     * Display the specified issue by admin and employee.
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showForAdminAndEmployee($id)
+    {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
+            return $this->getResponse('error', 'This action is unauthorized', 422);
+        }
+        
+        $issue = Cache::remember('issueAdminEmployee', 600, function () use ($id) {
+            return Issue::find($id);
+        });
+        if (!$issue) {
+            return $this->getResponse('error', 'Issue Not Found', 404);
+        }
+
+        return $this->getResponse('issue', new IssueResource($issue), 200);
     }
 }

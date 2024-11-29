@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Rate\FilterAiRequest;
 use App\Http\Requests\Rate\IndexFilterRequest;
 use App\Http\Requests\Rate\StoreRatingRequest;
 use App\Http\Requests\Rate\UpdateRatingRequest;
@@ -45,14 +44,16 @@ class RateController extends Controller
      */
     public function store(StoreRatingRequest $request, $id)
     {
-        $lawyer = Lawyer::find($id);
+        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+            return Lawyer::find($id);
+        });
         if (!$lawyer) {
             return $this->getResponse("error", "Lawyer Not Found!", 404);
         }
         $response = $this->rateService->createRate($request->validated(), $lawyer);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Create Rating To Lawyer ' . "'" . $lawyer->name . "'" . ' Successfully', 201)
+            ? $this->getResponse('msg', 'Created Rating Successfully', 201)
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
@@ -77,7 +78,9 @@ class RateController extends Controller
      */
     public function update(UpdateRatingRequest $request, $id)
     {
-        $rate = Rate::find($id);
+        $rate = Cache::remember('rate' . $id, 600, function () use ($id) {
+            return Rate::find($id);
+        });
         if (!$rate) {
             return $this->getResponse('error', 'Rate Not Found!', 404);
         }
@@ -107,7 +110,7 @@ class RateController extends Controller
      */
     public function ratesAI()
     {
-        $rates = Cache::remember('rates', 3600, function () {
+        $rates = Cache::remember('rates', 1200, function () {
             return Rate::all();
         });
         return $this->getResponse('rates', RateResource::collection($rates), 200);

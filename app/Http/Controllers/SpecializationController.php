@@ -29,10 +29,10 @@ class SpecializationController extends Controller
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
-        $specializations = Cache::remember('specializations', 3600, function () {
+        $specializations = Cache::remember('specializations', 1200, function () {
             return Specialization::all();
         });
-        
+
         return $this->getResponse('specializations', SpecializationResource::collection($specializations), 200);
     }
 
@@ -60,7 +60,10 @@ class SpecializationController extends Controller
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
-        $specialization = Specialization::find($id);
+        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+            return Specialization::find($id);
+        });
+
         if (!$specialization) {
             return $this->getResponse('error', 'Specialization Not Found!', 404);
         }
@@ -76,7 +79,10 @@ class SpecializationController extends Controller
      */
     public function update(UpdateSpecializationRequest $request, $id)
     {
-        $specialization = Specialization::find($id);
+        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+            return Specialization::find($id);
+        });
+
         if (!$specialization) {
             return $this->getResponse('error', 'Specialization Not Found!', 404);
         }
@@ -98,7 +104,10 @@ class SpecializationController extends Controller
             return $this->getResponse('error', 'This action is unauthorized', 422);
         }
 
-        $specialization = Specialization::find($id);
+        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+            return Specialization::find($id);
+        });
+
         if (!$specialization) {
             return $this->getResponse('error', 'Specialization Not Found!', 404);
         }

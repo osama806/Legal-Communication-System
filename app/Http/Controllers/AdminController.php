@@ -68,8 +68,8 @@ class AdminController extends Controller
      */
     public function profile()
     {
-        $user = Cache::remember('user', 3600, function () {
-            return User::where('id', Auth::guard('api')->user()->id)->first();
+        $user = Cache::remember('user' . Auth::guard('api')->id(), 600, function () {
+            return User::where('id', Auth::guard('api')->id())->first();
         });
 
         if ($user && $user->role->name !== 'admin') {

@@ -36,10 +36,10 @@ class RepresentativeService
      */
     public function getList(array $data)
     {
-        $representatives = Cache::remember("representatives", 3600, function () use ($data) {
+        $representatives = Cache::remember("representatives", 1200, function () use ($data) {
             return Representative::filter($data)->paginate($data['per_page'] ?? 10);
         });
-        
+
         if ($representatives->isEmpty()) {
             return [
                 'status' => false,
@@ -61,9 +61,18 @@ class RepresentativeService
      */
     public function sendResponse(array $data)
     {
-        $agency = Agency::find($data['agency_id']);
-        $user = User::find($agency->user_id);
-        $lawyer = Lawyer::find($agency->lawyer_id);
+        $agency = Cache::remember('agency' . $data['agency_id'], 600, function () use ($data) {
+            return Agency::find($data['agency_id']);
+        });
+
+        $user = Cache::remember('user' . $agency->user_id, 600, function () use ($agency) {
+            return User::find($agency->user_id);
+        });
+
+        $lawyer = Cache::remember('lawyer' . $agency->lawyer_id, 600, function () use ($agency) {
+            return Lawyer::find($agency->lawyer_id);
+        });
+
         try {
             DB::beginTransaction();
             $agency->sequential_number = $data['sequential_number'];
@@ -79,6 +88,7 @@ class RepresentativeService
             Notification::send([$user, $lawyer], new RepresentativeToAllNotification($agency));
             DB::commit();
 
+            Cache::forget('agency' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
             DB::rollBack();
@@ -122,6 +132,7 @@ class RepresentativeService
             }
 
             DB::commit();
+            Cache::forget('representatives');
             return [
                 'status' => true,
                 'token' => $token
@@ -160,6 +171,8 @@ class RepresentativeService
                 $representative->avatar = $avatarResponse['url'];
                 $representative->save();
             }
+
+            Cache::forget('representative' . $representative->id);
             return ['status' => true];
         } catch (Exception $e) {
             return [
@@ -191,6 +204,7 @@ class RepresentativeService
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
             $representative->delete();
+            Cache::forget('representative' . $representative->id);
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
