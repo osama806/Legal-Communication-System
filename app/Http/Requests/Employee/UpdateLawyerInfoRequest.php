@@ -43,7 +43,7 @@ class UpdateLawyerInfoRequest extends FormRequest
             'affiliation_date' => 'nullable|date|date_format:Y-m-d',
             'years_of_experience' => 'nullable|integer|min:1',
             'phone' => 'nullable|digits:10|unique:lawyers,phone',
-            'description' => 'nullable|string|min:50',
+            'description' => 'nullable|string|min:25',
             'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
     }

@@ -34,7 +34,7 @@ class UpdateSpecializationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'nullable|string|min:4|max:20|unique:specializations,name',
+            'name' => 'nullable|string|min:3|max:20|unique:specializations,name',
         ];
     }
 

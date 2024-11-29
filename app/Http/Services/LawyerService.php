@@ -171,6 +171,14 @@ class LawyerService
             return Representative::find($data['representative_id']);
         });
 
+        if ($agency->representative_id !== null || $agency->type !== null || $agency->authorizations !== null || $agency->exceptions !== null) {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+
         try {
             DB::beginTransaction();
             $agency->representative_id = $data['representative_id'];

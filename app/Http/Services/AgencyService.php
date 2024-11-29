@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use DB;
 use Exception;
 use Illuminate\Support\Facades\Notification;
+use Log;
 
 class AgencyService
 {
@@ -77,14 +78,22 @@ class AgencyService
                 "cause" => $data['cause']
             ]);
 
-            Notification::send($lawyer, new UserToLawyerNotification($agency));
-            DB::commit();
+            if ($agency->wasRecentlyCreated) {
+                Notification::send($lawyer, new UserToLawyerNotification($agency));
+                DB::commit();
 
-            Cache::forget('agencies');
-            Cache::forget('agenciesForUser');
-            Cache::forget('agenciesForLawyer');
-            Cache::forget('agenciesForRepresentative');
-            return ['status' => true];
+                Cache::forget('agencies');
+                Cache::forget('agenciesForUser');
+                Cache::forget('agenciesForLawyer');
+                Cache::forget('agenciesForRepresentative');
+                return ['status' => true];
+            } else {
+                return [
+                    'status' => false,
+                    'msg' => 'You Send Request to Same Lawyer Already!',
+                    'code' => 403
+                ];
+            }
         } catch (Exception $e) {
             DB::rollBack();
             return [

@@ -34,7 +34,7 @@ class StoreAgencyRequest extends FormRequest
     {
         return [
             'lawyer_id' => 'required|numeric|exists:lawyers,id',
-            'cause' => 'required|string|min:5|max:100',
+            'cause' => 'required|string|min:3|max:100',
         ];
     }
 

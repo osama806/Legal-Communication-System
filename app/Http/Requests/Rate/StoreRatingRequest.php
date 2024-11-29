@@ -34,7 +34,7 @@ class StoreRatingRequest extends FormRequest
     {
         return [
             "rating" => "required|numeric|min:1|max:5",
-            "review" => "nullable|string|max:256",
+            "review" => "nullable|string|min:3|max:256",
         ];
     }
 

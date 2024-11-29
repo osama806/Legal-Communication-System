@@ -73,6 +73,14 @@ class RepresentativeService
             return Lawyer::find($agency->lawyer_id);
         });
 
+        if ($agency->sequential_number !== null || $agency->record_number !== null || $agency->place_of_issue !== null || $agency->status !== "pending") {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+
         try {
             DB::beginTransaction();
             $agency->sequential_number = $data['sequential_number'];

@@ -55,9 +55,7 @@ Route::prefix("v1")->group(function () {
                 Route::post('auth/signout', 'logout');
                 Route::get('profile', 'profile');
                 Route::post('change-password', 'changePassword');
-                Route::put("{id}", "update");
-                Route::delete("{id}", "destroy");
-                Route::get('{id}/notifications', 'getNotifications');
+                Route::get('notifications', 'getNotifications');
             });
 
             Route::controller(AgencyController::class)->group(function () {
@@ -67,6 +65,7 @@ Route::prefix("v1")->group(function () {
                 Route::get('get-agencies/{id}', 'showForUser');
             });
 
+            Route::apiResource('/', UserController::class)->only(['destroy', 'update']);
             Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
             Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);
             Route::post('get-lawyers/{id}/rating', [RateController::class, 'store']);
@@ -137,8 +136,8 @@ Route::prefix("v1")->group(function () {
         Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(RepresentativeController::class)->group(function () {
             Route::post('auth/signout', 'logout');
             Route::get('profile', 'profile');
-            Route::get('{id}/notifications', 'getNotifications');
-            Route::post('{id}/send-notify-to-all', 'agencyAcceptance');
+            Route::get('notifications', 'getNotifications');
+            Route::post('send-notify-to-all', 'agencyAcceptance');
         });
         Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(AgencyController::class)->group(function () {
             Route::get('get-agencies', 'indexForRepresentative');
