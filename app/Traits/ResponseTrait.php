@@ -18,4 +18,20 @@ trait ResponseTrait
             $key => $val,
         ], $code);
     }
+
+    /**
+     * Formal response to return tokens
+     * @param string $access_token
+     * @param string $refresh_token
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function tokenResponse(string $access_token, string $refresh_token, string $role)
+    {
+        return response()->json([
+            'isSuccess' => true,
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
+            'role' => $role
+        ], 200);
+    }
 }

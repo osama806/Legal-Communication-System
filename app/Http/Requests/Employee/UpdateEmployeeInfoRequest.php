@@ -34,7 +34,7 @@ class UpdateEmployeeInfoRequest extends FormRequest
     {
         return [
             'name' => 'nullable|string|min:3|max:50',
-            'address' => 'nullable|string|min:5|max:100',
+            'address' => 'nullable|string|min:3|max:100',
             'birthdate' => 'nullable|date|date_format:Y-m-d',
             'birth_place' => 'nullable|string|min:3|max:100',
             'national_number' => 'nullable|digits:11|unique:users,national_number',

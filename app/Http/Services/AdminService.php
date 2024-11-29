@@ -8,6 +8,7 @@ use Exception;
 use Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdminService
 {
@@ -46,19 +47,22 @@ class AdminService
 
             // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $data['password']];
-            if (!$token = Auth::guard('api')->attempt($credentials)) {
+            if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 return [
                     'status' => false,
-                    'msg' => 'Failed to generate token, but admin registered successfully',
+                    'msg' => 'Failed to generate token',
                     'code' => 401
                 ];
             }
+
+            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser(Auth::guard('api')->user());
             DB::commit();
 
             Cache::forget('users');
             return [
                 'status' => true,
-                'token' => $token
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token
             ];
 
         } catch (Exception $e) {
@@ -78,12 +82,8 @@ class AdminService
      */
     public function login(array $data)
     {
-        if (
-            !$token = Auth::guard('api')->attempt([
-                'email' => $data['email'],
-                'password' => $data['password']
-            ])
-        ) {
+        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+        if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
             return [
                 'status' => false,
                 'msg' => 'Email or password is incorrect!',
@@ -91,11 +91,18 @@ class AdminService
             ];
         }
 
-        // Get the authenticated user
-        $role_user = Auth::guard('api')->user();
+        // استرجاع المستخدم المصادق عليه
+        $admin = Auth::guard('api')->user();
+        if (!$admin) {
+            return [
+                'status' => false,
+                'msg' => 'User not found!',
+                'code' => 404
+            ];
+        }
 
-        // Check if the user is null or does not have the 'admin' role
-        if (!$role_user || !$role_user->hasRole('admin')) {
+        // التحقق من دور المستخدم
+        if (!$admin->hasRole('admin')) {
             return [
                 'status' => false,
                 'msg' => 'Does not have admin privileges!',
@@ -103,10 +110,13 @@ class AdminService
             ];
         }
 
+        // إنشاء Refresh Token
+        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($admin);
+
         return [
-            "status" => true,
-            'token' => $token,
-            'role' => $role_user->role->name
+            'status' => true,
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
         ];
     }
 }

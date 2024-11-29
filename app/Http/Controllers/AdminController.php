@@ -29,9 +29,8 @@ class AdminController extends Controller
     public function signup(RegisterAdminRequest $registerRequest)
     {
         $response = $this->adminService->store($registerRequest->validated());
-
         return $response['status']
-            ? $this->getResponse("token", $response['token'], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
             : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
@@ -44,11 +43,7 @@ class AdminController extends Controller
     {
         $response = $this->adminService->login($request->validated());
         return $response['status']
-            ? response([
-                'isSuccess' => true,
-                'token' => $response['token'],
-                'role' => $response['role'],
-            ], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 

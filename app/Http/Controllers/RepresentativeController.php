@@ -17,6 +17,7 @@ use App\Http\Services\RepresentativeService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RepresentativeController extends Controller
 {
@@ -49,7 +50,7 @@ class RepresentativeController extends Controller
     {
         $response = $this->representativeService->signupRepresentative($request->validated());
         return $response['status']
-            ? $this->getResponse("token", $response['token'], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
             : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
@@ -60,16 +61,10 @@ class RepresentativeController extends Controller
      */
     public function login(LoginRequest $request)
     {
-        $credentials = $request->only('email', 'password');
-        if (!$token = Auth::guard('representative')->attempt($credentials)) {
-            return $this->getResponse('error', 'Email or password is incorrect!', 401);
-        }
-
-        return response([
-            "isSuccess" => true,
-            'token' => $token,
-            'role' => 'representative'
-        ], 201);
+        $response = $this->representativeService->signin($request->validated());
+        return $response['status']
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

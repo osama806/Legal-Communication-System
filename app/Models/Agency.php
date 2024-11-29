@@ -6,6 +6,7 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Agency extends Model
 {
@@ -53,12 +54,12 @@ class Agency extends Model
     }
 
     /**
-     * Defines a one-to-one relationship with the Issue model.
+     * Defines a one-to-many relationship with the Issue model.
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function issue(): BelongsTo
+    public function issue(): HasMany
     {
-        return $this->belongsTo(Issue::class);
+        return $this->hasMany(Issue::class);
     }
 
     /**

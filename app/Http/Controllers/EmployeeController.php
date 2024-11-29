@@ -44,7 +44,7 @@ class EmployeeController extends Controller
     {
         $response = $this->employeeService->signup($registerRequest->validated());
         return $response['status']
-            ? $this->getResponse("token", $response['token'], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
             : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
@@ -56,13 +56,8 @@ class EmployeeController extends Controller
     public function signin(LoginRequest $request)
     {
         $response = $this->employeeService->login($request->validated());
-
         return $response['status']
-            ? response([
-                "isSuccess" => true,
-                'token' => $response['token'],
-                'role' => $response['role'],
-            ], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
             : $this->getResponse('error', $response['msg'], $response['code']);
     }
 

@@ -17,6 +17,7 @@ use App\Http\Services\LawyerService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LawyerController extends Controller
 {
@@ -50,27 +51,21 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->signupLawyer($request->validated());
         return $response['status']
-            ? $this->getResponse("token", $response['token'], 201)
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
             : $this->getResponse("error", $response['msg'], $response['code']);
     }
 
     /**
      * Login
      * @param \App\Http\Requests\Auth\LoginRequest $request
-     * @return mixed|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function login(LoginRequest $request)
     {
-        $credentials = $request->only('email', 'password');
-        if (!$token = Auth::guard('lawyer')->attempt($credentials)) {
-            return $this->getResponse('error', 'Email or password is incorrect!', 401);
-        }
-
-        return response([
-            "isSuccess" => true,
-            'token' => $token,
-            'role' => "lawyer"
-        ], 201);
+        $response = $this->lawyerService->signin($request->validated());
+        return $response['status']
+            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

@@ -36,7 +36,7 @@ class RegisterRepresentativeRequest extends FormRequest
             'name' => 'required|string|min:3|max:50',
             'email' => 'required|email|unique:representatives,email',
             'password' => 'required|confirmed|min:8',
-            'address' => 'required|string|min:5|max:100',
+            'address' => 'required|string|min:3|max:100',
             'union_branch' => 'required|string|max:100',
             'union_number' => 'required|unique:representatives,union_number|digits:8',
             'avatar' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'

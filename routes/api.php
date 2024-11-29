@@ -25,7 +25,7 @@ Route::prefix("v1")->group(function () {
             Route::post('auth/signin', 'signin');
         });
 
-        Route::middleware('auth:api')->group(function () {
+        Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
             Route::controller(AdminController::class)->group(function () {
                 Route::post('auth/signout', 'signout');
                 Route::get('profile', 'profile');
@@ -50,7 +50,7 @@ Route::prefix("v1")->group(function () {
             Route::post('auth/signin', 'login');
         });
 
-        Route::middleware('auth:api')->group(function () {
+        Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
             Route::controller(UserController::class)->group(function () {
                 Route::post('auth/signout', 'logout');
                 Route::get('profile', 'profile');
@@ -78,7 +78,7 @@ Route::prefix("v1")->group(function () {
 
     Route::prefix("employees")->group(function () {
         Route::post('auth/signin', [EmployeeController::class, 'signin']);
-        Route::middleware('auth:api')->group(function () {
+        Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
             Route::post('auth/signout', [EmployeeController::class, 'signout']);
             Route::get('profile', [EmployeeController::class, 'profile']);
 
@@ -111,7 +111,7 @@ Route::prefix("v1")->group(function () {
 
     Route::prefix("lawyers")->group(function () {
         Route::post('auth/signin', [LawyerController::class, 'login']);
-        Route::middleware('auth:lawyer')->group(function () {
+        Route::middleware(['auth:lawyer', 'refresh.token', 'security'])->group(function () {
             Route::controller(LawyerController::class)->group(function () {
                 Route::post('auth/signout', 'logout');
                 Route::get('profile', 'profile');
@@ -134,13 +134,13 @@ Route::prefix("v1")->group(function () {
 
     Route::prefix("representatives")->group(function () {
         Route::post('auth/signin', [RepresentativeController::class, 'login']);
-        Route::middleware('auth:representative')->controller(RepresentativeController::class)->group(function () {
+        Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(RepresentativeController::class)->group(function () {
             Route::post('auth/signout', 'logout');
             Route::get('profile', 'profile');
             Route::get('{id}/notifications', 'getNotifications');
             Route::post('{id}/send-notify-to-all', 'agencyAcceptance');
         });
-        Route::middleware('auth:representative')->controller(AgencyController::class)->group(function () {
+        Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(AgencyController::class)->group(function () {
             Route::get('get-agencies', 'indexForRepresentative');
             Route::get('get-agencies/{id}', 'showForRepresentative');
         });

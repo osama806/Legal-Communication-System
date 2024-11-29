@@ -33,40 +33,60 @@ class UserService
      */
     public function register(array $data)
     {
-        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            // تحميل الصورة باستخدام الخدمة
+            $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
+
+            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
+            $plainPassword = $data['password'];
+
+            // تشفير كلمة المرور قبل إنشاء المستخدم
+            $data['password'] = Hash::make($plainPassword);
+            $data['avatar'] = $avatarResponse['url'];
+
+            // إنشاء المستخدم
             $user = User::create($data);
-            $user->password = Hash::make($data["password"]);
-            $user->avatar = $avatarResponse['url'];
-            $user->save();
 
-            $user->role()->create([
-                'name' => 'user'
-            ]);
+            // تعيين الدور
+            if (method_exists($user, 'role')) {
+                $user->role()->create([
+                    'name' => 'user'
+                ]);
+            } else {
+                throw new Exception("Role relationship not defined in User model.");
+            }
 
+            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
             // تسجيل الدخول وتوليد التوكن
-            $credentials = ['email' => $data['email'], 'password' => $data['password']];
-            if (!$token = Auth::guard('api')->attempt($credentials)) {
-                return [
-                    'status' => false,
-                    'msg' => 'Failed to generate token, but user registered successfully',
-                    'code' => 401
-                ];
+            $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
+            if (!$access_token = Auth::guard('api')->attempt($credentials)) {
+                throw new Exception('Failed to generate token');
             }
 
+            // توليد Refresh Token
+            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
+
             DB::commit();
+
+            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('users');
+
             return [
                 'status' => true,
-                'token' => $token
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token
             ];
 
         } catch (Exception $e) {
             DB::rollBack();
-            return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500
+            ];
         }
     }
 
@@ -77,7 +97,8 @@ class UserService
      */
     public function login(array $data)
     {
-        if (!$token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
+        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+        if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
             return [
                 'status' => false,
                 'msg' => 'Email or password is incorrect!',
@@ -85,11 +106,18 @@ class UserService
             ];
         }
 
-        // Get the authenticated user
-        $role_user = Auth::guard('api')->user();
+        // استرجاع المستخدم المصادق عليه
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User not found!',
+                'code' => 404
+            ];
+        }
 
-        // Check if the user is null or does not have the 'user' role
-        if (!$role_user || !$role_user->hasRole('user')) {
+        // التحقق من دور المستخدم
+        if (!$user->hasRole('user')) {
             return [
                 'status' => false,
                 'msg' => 'Does not have user privileges!',
@@ -97,10 +125,13 @@ class UserService
             ];
         }
 
+        // إنشاء Refresh Token
+        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
+
         return [
             'status' => true,
-            'token' => $token,
-            'role' => $role_user->role->name
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
         ];
     }
 
@@ -204,35 +235,50 @@ class UserService
      */
     public function signupUser(array $data)
     {
-        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            // تحميل الصورة باستخدام الخدمة
+            $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
+
+            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
+            $plainPassword = $data['password'];
+
+            // تشفير كلمة المرور قبل إنشاء المستخدم
+            $data['password'] = Hash::make($plainPassword);
+            $data['avatar'] = $avatarResponse['url'];
+
+            // إنشاء المستخدم
             $user = User::create($data);
-            $user->password = Hash::make($data["password"]);
-            $user->avatar = $avatarResponse['url'];
-            $user->save();
 
-            $user->role()->create([
-                'name' => 'user'
-            ]);
+            // تعيين الدور
+            if (method_exists($user, 'role')) {
+                $user->role()->create([
+                    'name' => 'user'
+                ]);
+            } else {
+                throw new Exception("Role relationship not defined in User model.");
+            }
 
+            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
             // تسجيل الدخول وتوليد التوكن
-            $credentials = ['email' => $data['email'], 'password' => $data['password']];
-            if (!$token = Auth::guard('api')->attempt($credentials)) {
-                return [
-                    'status' => false,
-                    'msg' => 'Failed to generate token, but user registered successfully',
-                    'code' => 401
-                ];
+            $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
+            if (!$access_token = Auth::guard('api')->attempt($credentials)) {
+                throw new Exception('Failed to generate token');
             }
 
+            // توليد Refresh Token
+            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
             DB::commit();
+
+            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('users');
+
             return [
                 'status' => true,
-                'token' => $token
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token
             ];
 
         } catch (Exception $e) {

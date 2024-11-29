@@ -60,46 +60,100 @@ class LawyerService
      */
     public function signupLawyer(array $data)
     {
-        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            // تحميل الصورة باستخدام الخدمة
+            $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
+
+            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
+            $plainPassword = $data['password'];
+
+            // تشفير كلمة المرور قبل إنشاء المستخدم
+            $data['password'] = Hash::make($plainPassword);
+            $data['avatar'] = $avatarResponse['url'];
+
+            // إنشاء المستخدم
             $lawyer = Lawyer::create($data);
-            $lawyer->password = Hash::make($data["password"]);
-            $lawyer->avatar = $avatarResponse['url'];
-            $lawyer->save();
 
-            $lawyer->role()->create([
-                'name' => 'lawyer'
-            ]);
-
-            $lawyer->specializations()->attach($data['specialization_id'], [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Mail::to($user->email)->send(new VerifyCodeMail($user));
-
-            // تسجيل الدخول وتوليد التوكن
-            $credentials = ['email' => $data['email'], 'password' => $data['password']];
-            if (!$token = Auth::guard('lawyer')->attempt($credentials)) {
-                return [
-                    'status' => false,
-                    'msg' => 'Failed to generate token, but lawyer registered successfully',
-                    'code' => 401
-                ];
+            // تعيين الدور
+            if (method_exists($lawyer, 'role')) {
+                $lawyer->role()->create([
+                    'name' => 'lawyer'
+                ]);
+            } else {
+                throw new Exception("Role relationship not defined in Lawyer model.");
             }
 
+            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
+            // Mail::to($lawyer->email)->send(new VerifyCodeMail($lawyer));
+
+            // تسجيل الدخول وتوليد التوكن
+            $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
+            if (!$access_token = Auth::guard('lawyer')->attempt($credentials)) {
+                throw new Exception('Failed to generate token');
+            }
+
+            // توليد Refresh Token
+            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($lawyer);
             DB::commit();
+
+            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('lawyers');
             return [
                 'status' => true,
-                'token' => $token
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token
             ];
 
         } catch (Exception $e) {
             DB::rollBack();
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
         }
+    }
+
+    /**
+     * Login
+     * @param array $data
+     * @return array
+     */
+    public function signin(array $data)
+    {
+        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+        if (!$access_token = Auth::guard('lawyer')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
+            return [
+                'status' => false,
+                'msg' => 'Email or password is incorrect!',
+                'code' => 401
+            ];
+        }
+
+        // استرجاع المستخدم المصادق عليه
+        $lawyer = Auth::guard('lawyer')->user();
+        if (!$lawyer) {
+            return [
+                'status' => false,
+                'msg' => 'Lawyer not found!',
+                'code' => 404
+            ];
+        }
+
+        // التحقق من دور المستخدم
+        if ($lawyer->role->name !== 'lawyer') {
+            return [
+                'status' => false,
+                'msg' => 'Does not have lawyer privileges!',
+                'code' => 403
+            ];
+        }
+
+        // إنشاء Refresh Token
+        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($lawyer);
+
+        return [
+            'status' => true,
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
+        ];
     }
 
     /**

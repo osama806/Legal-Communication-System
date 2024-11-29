@@ -10,6 +10,7 @@ use Cache;
 use DB;
 use Exception;
 use Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class EmployeeService
 {
@@ -27,35 +28,50 @@ class EmployeeService
      */
     public function signup(array $data)
     {
-        $avatarResponse = $this->assetService->storeImage($data['avatar']);
         try {
+            // تحميل الصورة باستخدام الخدمة
+            $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
-            $employee = User::create($data);
-            $employee->password = Hash::make($data["password"]);
-            $employee->avatar = $avatarResponse['url'];
-            $employee->save();
 
-            $employee->role()->create([
-                'name' => 'employee'
-            ]);
+            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
+            $plainPassword = $data['password'];
 
-            // Mail::to($employee->email)->send(new VerifyCodeMail($employee));
+            // تشفير كلمة المرور قبل إنشاء المستخدم
+            $data['password'] = Hash::make($plainPassword);
+            $data['avatar'] = $avatarResponse['url'];
 
-            // تسجيل الدخول وتوليد التوكن
-            $credentials = ['email' => $data['email'], 'password' => $data['password']];
-            if (!$token = Auth::guard('api')->attempt($credentials)) {
-                return [
-                    'status' => false,
-                    'msg' => 'Failed to generate token, but employee registered successfully',
-                    'code' => 401
-                ];
+            // إنشاء المستخدم
+            $user = User::create($data);
+
+            // تعيين الدور
+            if (method_exists($user, 'role')) {
+                $user->role()->create([
+                    'name' => 'employee'
+                ]);
+            } else {
+                throw new Exception("Role relationship not defined in User model.");
             }
 
+            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
+            // Mail::to($user->email)->send(new VerifyCodeMail($user));
+
+            // تسجيل الدخول وتوليد التوكن
+            $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
+            if (!$access_token = Auth::guard('api')->attempt($credentials)) {
+                throw new Exception('Failed to generate token');
+            }
+
+            // توليد Refresh Token
+            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
+
             DB::commit();
+
+            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('employees');
             return [
                 'status' => true,
-                'token' => $token,
+                'access_token' => $access_token,
+                'refresh_token' => $refresh_token
             ];
 
         } catch (Exception $e) {
@@ -71,7 +87,8 @@ class EmployeeService
      */
     public function login(array $data)
     {
-        if (!$token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
+        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+        if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
             return [
                 'status' => false,
                 'msg' => 'Email or password is incorrect!',
@@ -79,11 +96,18 @@ class EmployeeService
             ];
         }
 
-        // Get the authenticated user
-        $role_user = Auth::guard('api')->user();
+        // استرجاع المستخدم المصادق عليه
+        $employee = Auth::guard('api')->user();
+        if (!$employee) {
+            return [
+                'status' => false,
+                'msg' => 'Employee not found!',
+                'code' => 404
+            ];
+        }
 
-        // Check if the user is null or does not have the 'employee' role
-        if (!$role_user || !$role_user->hasRole('employee')) {
+        // التحقق من دور المستخدم
+        if (!$employee->hasRole('employee')) {
             return [
                 'status' => false,
                 'msg' => 'Does not have employee privileges!',
@@ -91,10 +115,13 @@ class EmployeeService
             ];
         }
 
+        // إنشاء Refresh Token
+        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($employee);
+
         return [
             'status' => true,
-            'token' => $token,
-            'role' => $role_user->role->name
+            'access_token' => $access_token,
+            'refresh_token' => $refresh_token,
         ];
     }
 

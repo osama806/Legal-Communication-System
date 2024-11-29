@@ -37,7 +37,7 @@ class UpdateLawyerInfoRequest extends FormRequest
     {
         return [
             'name' => 'nullable|string|min:3|max:50',
-            'address' => 'nullable|string|min:5|max:100',
+            'address' => 'nullable|string|min:3|max:100',
             'union_branch' => 'nullable|string|max:100',
             'union_number' => 'nullable|digits:8|unique:lawyers,union_number',
             'affiliation_date' => 'nullable|date|date_format:Y-m-d',
