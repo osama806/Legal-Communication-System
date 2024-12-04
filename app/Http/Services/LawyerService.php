@@ -112,51 +112,6 @@ class LawyerService
     }
 
     /**
-     * Login
-     * @param array $data
-     * @return array
-     */
-    public function signin(array $data)
-    {
-        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
-        if (!$access_token = Auth::guard('lawyer')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
-            return [
-                'status' => false,
-                'msg' => 'Email or password is incorrect!',
-                'code' => 401
-            ];
-        }
-
-        // استرجاع المستخدم المصادق عليه
-        $lawyer = Auth::guard('lawyer')->user();
-        if (!$lawyer) {
-            return [
-                'status' => false,
-                'msg' => 'Lawyer not found!',
-                'code' => 404
-            ];
-        }
-
-        // التحقق من دور المستخدم
-        if ($lawyer->role->name !== 'lawyer') {
-            return [
-                'status' => false,
-                'msg' => 'Does not have lawyer privileges!',
-                'code' => 403
-            ];
-        }
-
-        // إنشاء Refresh Token
-        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($lawyer);
-
-        return [
-            'status' => true,
-            'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
-        ];
-    }
-
-    /**
      * Update agency record and send notification to representative
      * @param array $data
      * @return array

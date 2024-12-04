@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LawyerController;
@@ -19,22 +20,20 @@ Route::prefix("v1")->group(function () {
         Route::get("rates", [RateController::class, "ratesAI"]);
     });
 
+    // Auth admin, employee, lawyer & representative
+    Route::prefix('auth')->group(function () {
+        Route::post('signin', [AuthController::class, 'login']);
+        Route::post('signout', [AuthController::class, 'logout'])->middleware(['auth:api,lawyer,representative']);
+    });
+
     Route::prefix("admin")->group(function () {
-        Route::controller(AdminController::class)->group(function () {
-            Route::post("auth/signup", "signup");
-            Route::post('auth/signin', 'signin');
-        });
-
+        Route::post("auth/signup", [AdminController::class, "signup"]);
         Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
-            Route::controller(AdminController::class)->group(function () {
-                Route::post('auth/signout', 'signout');
-                Route::get('profile', 'profile');
-            });
-
+            Route::get('profile', [AdminController::class, 'profile']);
             Route::post("signup-user", [UserController::class, "registerUser"]);
+            Route::apiResource("get-users", UserController::class)->only(["index", "show"]);
             Route::get("get-issues", [IssueController::class, "getForAdminAndEmployee"]);
             Route::get("get-issues/{id}", [IssueController::class, "showForAdminAndEmployee"]);
-            Route::apiResource("get-users", UserController::class)->only(["index", "show"]);
             Route::apiResource("get-employees", EmployeeController::class)->except(["update", "destroy"]);
             Route::apiResource("get-lawyers", LawyerController::class)->except(["update", "destroy"]);
             Route::apiResource("get-representatives", RepresentativeController::class)->except(["update", "destroy"]);
@@ -44,43 +43,9 @@ Route::prefix("v1")->group(function () {
         });
     });
 
-    Route::prefix("users")->group(function () {
-        Route::controller(UserController::class)->group(function () {
-            Route::post("auth/signup", "store");
-            Route::post('auth/signin', 'login');
-        });
-
-        Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
-            Route::controller(UserController::class)->group(function () {
-                Route::post('auth/signout', 'logout');
-                Route::get('profile', 'profile');
-                Route::post('change-password', 'changePassword');
-                Route::get('notifications', 'getNotifications');
-            });
-
-            Route::controller(AgencyController::class)->group(function () {
-                Route::post('send-notify-to-lawyer', 'store');
-                Route::put('get-agencies/{id}/isolate', 'destroy');
-                Route::get('get-agencies', 'indexForUser');
-                Route::get('get-agencies/{id}', 'showForUser');
-            });
-
-            Route::apiResource('/', UserController::class)->only(['destroy', 'update']);
-            Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
-            Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);
-            Route::post('get-lawyers/{id}/rating', [RateController::class, 'store']);
-            Route::put('get-rates/{id}', [RateController::class, 'update']);
-            Route::get('get-issues', [IssueController::class, 'indexForUser']);
-            Route::get('get-issues/{id}', [IssueController::class, 'showForUser']);
-        });
-    });
-
     Route::prefix("employees")->group(function () {
-        Route::post('auth/signin', [EmployeeController::class, 'signin']);
         Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
-            Route::post('auth/signout', [EmployeeController::class, 'signout']);
             Route::get('profile', [EmployeeController::class, 'profile']);
-
             Route::controller(UserController::class)->group(function () {
                 Route::get('get-users', 'indexForEmployee');
                 Route::get('get-users/{id}', 'showForEmployee');
@@ -108,11 +73,38 @@ Route::prefix("v1")->group(function () {
         });
     });
 
+    // Auth user
+    Route::controller(UserController::class)->group(function () {
+        Route::post("auth/user/signup", "store");
+        Route::post('auth/user/signin', 'login');
+        Route::post('auth/user/signout', 'logout')->middleware(['auth:api', 'refresh.token', 'security']);
+    });
+
+    Route::prefix("users")->middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
+        Route::controller(UserController::class)->group(function () {
+            Route::get('profile', 'profile');
+            Route::post('change-password', 'changePassword');
+            Route::get('notifications', 'getNotifications');
+        });
+        Route::controller(AgencyController::class)->group(function () {
+            Route::post('send-notify-to-lawyer', 'store');
+            Route::put('get-agencies/{id}/isolate', 'destroy');
+            Route::get('get-agencies', 'indexForUser');
+            Route::get('get-agencies/{id}', 'showForUser');
+        });
+
+        Route::apiResource('/', UserController::class)->only(['destroy', 'update']);
+        Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
+        Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);
+        Route::post('get-lawyers/{id}/rating', [RateController::class, 'store']);
+        Route::put('get-rates/{id}', [RateController::class, 'update']);
+        Route::get('get-issues', [IssueController::class, 'indexForUser']);
+        Route::get('get-issues/{id}', [IssueController::class, 'showForUser']);
+    });
+
     Route::prefix("lawyers")->group(function () {
-        Route::post('auth/signin', [LawyerController::class, 'login']);
         Route::middleware(['auth:lawyer', 'refresh.token', 'security'])->group(function () {
             Route::controller(LawyerController::class)->group(function () {
-                Route::post('auth/signout', 'logout');
                 Route::get('profile', 'profile');
                 Route::get('notifications', 'getNotifications');
                 Route::post('send-notify-to-representative', 'agencyAccepted');
@@ -131,15 +123,13 @@ Route::prefix("v1")->group(function () {
         });
     });
 
-    Route::prefix("representatives")->group(function () {
-        Route::post('auth/signin', [RepresentativeController::class, 'login']);
-        Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(RepresentativeController::class)->group(function () {
-            Route::post('auth/signout', 'logout');
+    Route::prefix("representatives")->middleware(['auth:representative', 'refresh.token', 'security'])->group(function () {
+        Route::controller(RepresentativeController::class)->group(function () {
             Route::get('profile', 'profile');
             Route::get('notifications', 'getNotifications');
             Route::post('send-notify-to-all', 'agencyAcceptance');
         });
-        Route::middleware(['auth:representative', 'refresh.token', 'security'])->controller(AgencyController::class)->group(function () {
+        Route::controller(AgencyController::class)->group(function () {
             Route::get('get-agencies', 'indexForRepresentative');
             Route::get('get-agencies/{id}', 'showForRepresentative');
         });

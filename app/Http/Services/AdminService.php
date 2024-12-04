@@ -74,49 +74,4 @@ class AdminService
             ];
         }
     }
-
-    /**
-     * Login
-     * @param array $data
-     * @return mixed
-     */
-    public function login(array $data)
-    {
-        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
-        if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
-            return [
-                'status' => false,
-                'msg' => 'Email or password is incorrect!',
-                'code' => 401
-            ];
-        }
-
-        // استرجاع المستخدم المصادق عليه
-        $admin = Auth::guard('api')->user();
-        if (!$admin) {
-            return [
-                'status' => false,
-                'msg' => 'User not found!',
-                'code' => 404
-            ];
-        }
-
-        // التحقق من دور المستخدم
-        if (!$admin->hasRole('admin')) {
-            return [
-                'status' => false,
-                'msg' => 'Does not have admin privileges!',
-                'code' => 403
-            ];
-        }
-
-        // إنشاء Refresh Token
-        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($admin);
-
-        return [
-            'status' => true,
-            'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
-        ];
-    }
 }

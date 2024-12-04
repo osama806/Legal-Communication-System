@@ -49,29 +49,6 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Login
-     * @param \App\Http\Requests\Auth\LoginRequest $request
-     * @return mixed|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
-    public function signin(LoginRequest $request)
-    {
-        $response = $this->employeeService->login($request->validated());
-        return $response['status']
-            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Logout
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function signout()
-    {
-        Auth::guard('api')->logout();
-        return $this->success('msg', 'Successfully logged out', 200);
-    }
-
-    /**
      * Get account info
      * @return mixed|\Illuminate\Http\JsonResponse
      */

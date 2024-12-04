@@ -81,51 +81,6 @@ class EmployeeService
     }
 
     /**
-     * Login
-     * @param array $data
-     * @return array
-     */
-    public function login(array $data)
-    {
-        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
-        if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
-            return [
-                'status' => false,
-                'msg' => 'Email or password is incorrect!',
-                'code' => 401
-            ];
-        }
-
-        // استرجاع المستخدم المصادق عليه
-        $employee = Auth::guard('api')->user();
-        if (!$employee) {
-            return [
-                'status' => false,
-                'msg' => 'Employee not found!',
-                'code' => 404
-            ];
-        }
-
-        // التحقق من دور المستخدم
-        if (!$employee->hasRole('employee')) {
-            return [
-                'status' => false,
-                'msg' => 'Does not have employee privileges!',
-                'code' => 403
-            ];
-        }
-
-        // إنشاء Refresh Token
-        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($employee);
-
-        return [
-            'status' => true,
-            'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
-        ];
-    }
-
-    /**
      * Get employees by admin
      * @param array $data
      * @return array

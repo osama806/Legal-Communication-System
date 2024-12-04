@@ -42,12 +42,15 @@ class UserController extends Controller
 
     /**
      * Logout
-     * @return mixed|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function logout()
     {
-        Auth::guard('api')->logout();
-        return $this->success('msg', 'Successfully logged out', 200);
+        if (Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('user')) {
+            Auth::guard('api')->logout();
+            return $this->logoutResponse('user');
+        } else
+            return $this->error('This action is unauthorized', 422);
     }
 
     /**

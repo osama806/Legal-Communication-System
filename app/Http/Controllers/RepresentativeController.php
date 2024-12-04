@@ -55,29 +55,6 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Login
-     * @param \App\Http\Requests\Auth\LoginRequest $request
-     * @return mixed|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
-    public function login(LoginRequest $request)
-    {
-        $response = $this->representativeService->signin($request->validated());
-        return $response['status']
-            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Logout
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function logout()
-    {
-        Auth::guard('representative')->logout();
-        return $this->success('msg', 'Successfully logged out', 200);
-    }
-
-    /**
      * Get account info
      * @return mixed|\Illuminate\Http\JsonResponse
      */

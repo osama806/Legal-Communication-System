@@ -50,4 +50,18 @@ trait ResponseTrait
             'role' => $role
         ], 200);
     }
+
+    /**
+     * Formal response to signout
+     * @param string $role
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function logoutResponse(string $role)
+    {
+        return response([
+            'isSuccess' => true,
+            'msg' => 'Successfully logged out',
+            'role' => $role
+        ], 200);
+    }
 }

@@ -56,29 +56,6 @@ class LawyerController extends Controller
     }
 
     /**
-     * Login
-     * @param \App\Http\Requests\Auth\LoginRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function login(LoginRequest $request)
-    {
-        $response = $this->lawyerService->signin($request->validated());
-        return $response['status']
-            ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Logout
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function logout()
-    {
-        Auth::guard('lawyer')->logout();
-        return $this->success('msg', 'Successfully logged out', 200);
-    }
-
-    /**
      * Get account info
      * @return mixed|\Illuminate\Http\JsonResponse
      */
