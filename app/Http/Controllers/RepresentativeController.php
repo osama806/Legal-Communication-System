@@ -37,8 +37,8 @@ class RepresentativeController extends Controller
     {
         $response = $this->representativeService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['representatives'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['representatives'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -51,7 +51,7 @@ class RepresentativeController extends Controller
         $response = $this->representativeService->signupRepresentative($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -64,7 +64,7 @@ class RepresentativeController extends Controller
         $response = $this->representativeService->signin($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -74,7 +74,7 @@ class RepresentativeController extends Controller
     public function logout()
     {
         Auth::guard('representative')->logout();
-        return $this->getResponse('msg', 'Successfully logged out', 200);
+        return $this->success('msg', 'Successfully logged out', 200);
     }
 
     /**
@@ -87,10 +87,10 @@ class RepresentativeController extends Controller
             return Representative::where('id', Auth::guard('representative')->id())->first();
         });
         if ($representative && $representative->role->name !== 'representative') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->getResponse("profile", new RepresentativeResource($representative), 200);
+        return $this->success("profile", new RepresentativeResource($representative), 200);
     }
 
     /**
@@ -106,8 +106,8 @@ class RepresentativeController extends Controller
         });
 
         return $response['status']
-            ? $this->getResponse('msg', 'Agency Status is ' . $agency->status, 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Agency Status is ' . $agency->status, 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -117,7 +117,7 @@ class RepresentativeController extends Controller
     public function getNotifications()
     {
         $representative = Auth::guard('representative')->user();
-        return $this->getResponse('notifications', NotificationResource::collection($representative->notifications), 200);
+        return $this->success('notifications', NotificationResource::collection($representative->notifications), 200);
     }
 
     /**
@@ -128,15 +128,15 @@ class RepresentativeController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->getResponse("error", "Representative Not Found", 404);
+            return $this->success("error", "Representative Not Found", 404);
         }
-        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
+        return $this->success("representative", new RepresentativeResource($representative), 200);
     }
 
     /**
@@ -151,13 +151,13 @@ class RepresentativeController extends Controller
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->getResponse('error', 'Representative Not Found!', 404);
+            return $this->error('Representative Not Found!', 404);
         }
         $response = $this->representativeService->update($request->validated(), $representative);
 
         return $response['status']
-            ? $this->getResponse("msg", "Representative updated profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            ? $this->success("msg", "Representative updated profile successfully", 200)
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -171,13 +171,13 @@ class RepresentativeController extends Controller
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->getResponse('error', 'Representative Not Found!', 404);
+            return $this->error('Representative Not Found!', 404);
         }
         $response = $this->representativeService->destroy($representative);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Account Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -189,8 +189,8 @@ class RepresentativeController extends Controller
     {
         $response = $this->representativeService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['representatives'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['representatives'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -201,15 +201,15 @@ class RepresentativeController extends Controller
     public function showForLawyer($id)
     {
         if (!Auth::guard('lawyer')->check()) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->getResponse("error", "Representative Not Found", 404);
+            return $this->success("error", "Representative Not Found", 404);
         }
-        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
+        return $this->success("representative", new RepresentativeResource($representative), 200);
     }
 
     /**
@@ -221,8 +221,8 @@ class RepresentativeController extends Controller
     {
         $response = $this->representativeService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['representatives'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['representatives'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -233,14 +233,14 @@ class RepresentativeController extends Controller
     public function showForEmployee($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->getResponse("error", "Representative Not Found", 404);
+            return $this->success("error", "Representative Not Found", 404);
         }
-        return $this->getResponse("representative", new RepresentativeResource($representative), 200);
+        return $this->success("representative", new RepresentativeResource($representative), 200);
     }
 }

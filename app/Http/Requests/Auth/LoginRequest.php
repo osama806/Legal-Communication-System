@@ -27,8 +27,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "email"         =>      "required|email",
-            "password"      =>      "required|min:8"
+            "email" => "required|email",
+            "password" => "required|min:8"
         ];
     }
 
@@ -40,7 +40,7 @@ class LoginRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->getResponse("errors", $validator->errors(), 422));
+        throw new ValidationException($validator, $this->success("errors", $validator->errors(), 422));
     }
 
     /**
@@ -50,8 +50,8 @@ class LoginRequest extends FormRequest
     public function attributes()
     {
         return [
-            "email"     =>      "Email address",
-            "password"  =>      "Password"
+            "email" => "Email address",
+            "password" => "Password"
         ];
     }
 
@@ -62,9 +62,9 @@ class LoginRequest extends FormRequest
     public function messages()
     {
         return [
-            "required"        =>      ":attribute is required",
-            "email"           =>      "Please enter a valid :attribute",
-            "min"             =>      ":attribute must be at least :min characters long"
+            "required" => ":attribute is required",
+            "email" => "Please enter a valid :attribute",
+            "min" => ":attribute must be at least :min characters long"
         ];
     }
 }

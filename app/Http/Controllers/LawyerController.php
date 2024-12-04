@@ -38,8 +38,8 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['lawyers'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['lawyers'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -52,7 +52,7 @@ class LawyerController extends Controller
         $response = $this->lawyerService->signupLawyer($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -65,7 +65,7 @@ class LawyerController extends Controller
         $response = $this->lawyerService->signin($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -75,7 +75,7 @@ class LawyerController extends Controller
     public function logout()
     {
         Auth::guard('lawyer')->logout();
-        return $this->getResponse('msg', 'Successfully logged out', 200);
+        return $this->success('msg', 'Successfully logged out', 200);
     }
 
     /**
@@ -88,10 +88,10 @@ class LawyerController extends Controller
             return Lawyer::where('id', Auth::guard('lawyer')->id())->first();
         });
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->getResponse("profile", new LawyerResource($lawyer), 200);
+        return $this->success("profile", new LawyerResource($lawyer), 200);
     }
 
     /**
@@ -106,8 +106,8 @@ class LawyerController extends Controller
         });
         $response = $this->lawyerService->send($request->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Send request to representative ' . $representative->name, 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Send request to representative ' . $representative->name, 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -117,7 +117,7 @@ class LawyerController extends Controller
     public function getNotifications()
     {
         $lawyer = Auth::guard('lawyer')->user();
-        return $this->getResponse('notifications', NotificationResource::collection($lawyer->notifications), 200);
+        return $this->success('notifications', NotificationResource::collection($lawyer->notifications), 200);
     }
 
     /**
@@ -128,15 +128,15 @@ class LawyerController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
         if (!$lawyer) {
-            return $this->getResponse("error", "Lawyer Not Found!", 404);
+            return $this->success("error", "Lawyer Not Found!", 404);
         }
-        return $this->getResponse("lawyer", new LawyerResource($lawyer), 200);
+        return $this->success("lawyer", new LawyerResource($lawyer), 200);
     }
 
     /**
@@ -151,12 +151,12 @@ class LawyerController extends Controller
             return Lawyer::find($id);
         });
         if (!$lawyer) {
-            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+            return $this->error('Lawyer Not Found!', 404);
         }
         $response = $this->lawyerService->update($request->validated(), $lawyer);
         return $response['status']
-            ? $this->getResponse("msg", "Lawyer updated profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            ? $this->success("msg", "Lawyer updated profile successfully", 200)
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -170,13 +170,13 @@ class LawyerController extends Controller
             return Lawyer::find($id);
         });
         if (!$lawyer) {
-            return $this->getResponse('error', 'Lawyer Not Found!', 404);
+            return $this->error('Lawyer Not Found!', 404);
         }
         $response = $this->lawyerService->destroy($lawyer);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Account Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -188,8 +188,8 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['lawyers'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['lawyers'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -201,8 +201,8 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->fetchOne($id);
         return $response['status']
-            ? $this->getResponse('lawyer', new LawyerResource($response['lawyer']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('lawyer', new LawyerResource($response['lawyer']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -214,7 +214,7 @@ class LawyerController extends Controller
         $lawyers = Cache::remember('lawyers', 1200, function () {
             return Lawyer::all();
         });
-        return $this->getResponse('lawyers', LawyerResource::collection($lawyers), 200);
+        return $this->success('lawyers', LawyerResource::collection($lawyers), 200);
     }
 
     /**
@@ -226,8 +226,8 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['lawyers'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['lawyers'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -239,7 +239,7 @@ class LawyerController extends Controller
     {
         $response = $this->lawyerService->fetchOneForEmployee($id);
         return $response['status']
-            ? $this->getResponse('lawyer', new LawyerResource($response['lawyer']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('lawyer', new LawyerResource($response['lawyer']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 }

@@ -31,8 +31,8 @@ class EmployeeController extends Controller
     {
         $response = $this->employeeService->getList($request->validated());
         return $response["status"]
-            ? $this->getResponse("employees", $response['employees'], 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            ? $this->success("employees", $response['employees'], 200)
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -45,7 +45,7 @@ class EmployeeController extends Controller
         $response = $this->employeeService->signup($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -58,7 +58,7 @@ class EmployeeController extends Controller
         $response = $this->employeeService->login($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -68,7 +68,7 @@ class EmployeeController extends Controller
     public function signout()
     {
         Auth::guard('api')->logout();
-        return $this->getResponse('msg', 'Successfully logged out', 200);
+        return $this->success('msg', 'Successfully logged out', 200);
     }
 
     /**
@@ -81,10 +81,10 @@ class EmployeeController extends Controller
             return User::where('id', Auth::guard('api')->id())->first();
         });
         if ($user && $user->role->name !== 'employee') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->getResponse("profile", new UserResource($user), 200);
+        return $this->success("profile", new UserResource($user), 200);
     }
 
     /**
@@ -95,12 +95,12 @@ class EmployeeController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $response = $this->employeeService->fetchOne($id);
 
         return $response['status']
-            ? $this->getResponse('employee', new UserResource($response['employee']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('employee', new UserResource($response['employee']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 }

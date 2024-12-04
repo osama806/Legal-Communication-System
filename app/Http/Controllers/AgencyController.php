@@ -34,8 +34,8 @@ class AgencyController extends Controller
     {
         $response = $this->agencyService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['agencies'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['agencies'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -48,8 +48,8 @@ class AgencyController extends Controller
         $response = $this->agencyService->createAgency($request->validated());
 
         return $response['status']
-            ? $this->getResponse('msg', 'Send Request To Lawyer Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Send Request To Lawyer Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -71,9 +71,9 @@ class AgencyController extends Controller
         });
 
         if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
+            return $this->error('Agency Not Found', 404);
         }
-        return $this->getResponse('agency', new AgencyResource($agency), 200);
+        return $this->success('agency', new AgencyResource($agency), 200);
     }
 
     /**
@@ -87,13 +87,13 @@ class AgencyController extends Controller
             return Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
         });
         if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
+            return $this->error('Agency Not Found', 404);
         }
 
         $response = $this->agencyService->isolate($agency);
         return $response['status']
-            ? $this->getResponse('msg', 'Agency Isolated Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Agency Isolated Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -105,7 +105,7 @@ class AgencyController extends Controller
         $agencies = Cache::remember('agencies', 1200, function () {
             return Agency::all();
         });
-        return $this->getResponse('agencies', AgencyResource::collection($agencies), 200);
+        return $this->success('agencies', AgencyResource::collection($agencies), 200);
     }
 
     /**
@@ -117,8 +117,8 @@ class AgencyController extends Controller
     {
         $response = $this->agencyService->getListForUser($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['agencies'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['agencies'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -140,9 +140,9 @@ class AgencyController extends Controller
         });
 
         if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
+            return $this->error('Agency Not Found', 404);
         }
-        return $this->getResponse('agency', new AgencyResource($agency), 200);
+        return $this->success('agency', new AgencyResource($agency), 200);
     }
 
     /**
@@ -154,8 +154,8 @@ class AgencyController extends Controller
     {
         $response = $this->agencyService->getListForLawyer($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['agencies'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['agencies'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -177,9 +177,9 @@ class AgencyController extends Controller
         });
 
         if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
+            return $this->error('Agency Not Found', 404);
         }
-        return $this->getResponse('agency', new AgencyResource($agency), 200);
+        return $this->success('agency', new AgencyResource($agency), 200);
     }
 
     /**
@@ -191,8 +191,8 @@ class AgencyController extends Controller
     {
         $response = $this->agencyService->getListForRepresentative($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['agencies'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['agencies'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -214,8 +214,8 @@ class AgencyController extends Controller
         });
 
         if (!$agency) {
-            return $this->getResponse('error', 'Agency Not Found', 404);
+            return $this->error('Agency Not Found', 404);
         }
-        return $this->getResponse('agency', new AgencyResource($agency), 200);
+        return $this->success('agency', new AgencyResource($agency), 200);
     }
 }

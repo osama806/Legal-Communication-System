@@ -34,8 +34,8 @@ class IssueController extends Controller
     {
         $response = $this->issueService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse("data", $response['issues'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success("data", $response['issues'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -47,8 +47,8 @@ class IssueController extends Controller
     {
         $response = $this->issueService->storeIssue($request->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Created Issue Successfully', 201)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Created Issue Successfully', 201)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -62,10 +62,10 @@ class IssueController extends Controller
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
+            return $this->error('Issue Not Found', 404);
         }
 
-        return $this->getResponse('issue', new IssueResource($issue), 200);
+        return $this->success('issue', new IssueResource($issue), 200);
     }
 
     /**
@@ -80,13 +80,13 @@ class IssueController extends Controller
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
+            return $this->error('Issue Not Found', 404);
         }
         $response = $this->issueService->changeStatus($request->validated(), $issue);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Changed Issue Status Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Changed Issue Status Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -101,13 +101,13 @@ class IssueController extends Controller
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
+            return $this->error('Issue Not Found', 404);
         }
         $response = $this->issueService->endIssue($request->validated(), $issue);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Ended Issue Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Ended Issue Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -119,8 +119,8 @@ class IssueController extends Controller
     {
         $response = $this->issueService->removeIssue($id);
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Issue Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Issue Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -133,7 +133,7 @@ class IssueController extends Controller
             return Issue::all();
         });
 
-        return $this->getResponse('issues', IssueResource::collection($issues), 200);
+        return $this->success('issues', IssueResource::collection($issues), 200);
     }
 
     /**
@@ -145,8 +145,8 @@ class IssueController extends Controller
     {
         $response = $this->issueService->getListForUser($request->validated());
         return $response['status']
-            ? $this->getResponse("data", $response['issues'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success("data", $response['issues'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -162,10 +162,10 @@ class IssueController extends Controller
             })->with('agency')->find($id);
         });
         if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
+            return $this->error('Issue Not Found', 404);
         }
 
-        return $this->getResponse('issue', new IssueResource($issue), 200);
+        return $this->success('issue', new IssueResource($issue), 200);
     }
 
     /**
@@ -177,8 +177,8 @@ class IssueController extends Controller
     {
         $response = $this->issueService->AdminAndEmployee($request->validated());
         return $response['status']
-            ? $this->getResponse("data", $response['issues'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success("data", $response['issues'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -189,16 +189,16 @@ class IssueController extends Controller
     public function showForAdminAndEmployee($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
-        
+
         $issue = Cache::remember('issueAdminEmployee', 600, function () use ($id) {
             return Issue::find($id);
         });
         if (!$issue) {
-            return $this->getResponse('error', 'Issue Not Found', 404);
+            return $this->error('Issue Not Found', 404);
         }
 
-        return $this->getResponse('issue', new IssueResource($issue), 200);
+        return $this->success('issue', new IssueResource($issue), 200);
     }
 }

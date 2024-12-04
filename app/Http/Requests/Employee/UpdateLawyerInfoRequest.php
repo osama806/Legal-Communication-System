@@ -25,7 +25,7 @@ class UpdateLawyerInfoRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->getResponse("error", "This action is unauthorized.", 422));
+        throw new HttpResponseException($this->success("error", "This action is unauthorized.", 422));
     }
 
     /**
@@ -56,7 +56,7 @@ class UpdateLawyerInfoRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->getResponse("errors", $validator->errors(), 422));
+        throw new ValidationException($validator, $this->success("errors", $validator->errors(), 422));
     }
 
     /**

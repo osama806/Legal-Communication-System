@@ -36,7 +36,7 @@ class FilterRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->getResponse('errors', $validator->errors(), 401));
+        throw new ValidationException($validator, $this->success('errors', $validator->errors(), 401));
     }
 
     public function attributes()

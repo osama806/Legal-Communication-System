@@ -37,7 +37,7 @@ class UserController extends Controller
         $response = $this->userService->login($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -47,7 +47,7 @@ class UserController extends Controller
     public function logout()
     {
         Auth::guard('api')->logout();
-        return $this->getResponse('msg', 'Successfully logged out', 200);
+        return $this->success('msg', 'Successfully logged out', 200);
     }
 
     /**
@@ -59,8 +59,8 @@ class UserController extends Controller
     {
         $response = $this->userService->updatePassword($request->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Changed password successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Changed password successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -72,8 +72,8 @@ class UserController extends Controller
     {
         $response = $this->userService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('users', $response['users'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('users', $response['users'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -86,7 +86,7 @@ class UserController extends Controller
         $response = $this->userService->register($registerUserRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -99,10 +99,10 @@ class UserController extends Controller
             return User::where('id', Auth::guard('api')->id())->first();
         });
         if ($user && $user->role->name !== 'user') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->getResponse("profile", new UserResource($user), 200);
+        return $this->success("profile", new UserResource($user), 200);
     }
 
     /**
@@ -114,8 +114,8 @@ class UserController extends Controller
     {
         $response = $this->userService->updateProfile($updateProfileRequest->validated());
         return $response['status']
-            ? $this->getResponse("msg", "User updated profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            ? $this->success("msg", "User updated profile successfully", 200)
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -126,8 +126,8 @@ class UserController extends Controller
     {
         $response = $this->userService->deleteAccount();
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Account Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -137,7 +137,7 @@ class UserController extends Controller
     public function getNotifications()
     {
         $user = Auth::guard('api')->user();
-        return $this->getResponse('notifications', NotificationResource::collection($user->notifications), 200);
+        return $this->success('notifications', NotificationResource::collection($user->notifications), 200);
     }
 
     /**
@@ -150,7 +150,7 @@ class UserController extends Controller
         $response = $this->userService->signupUser($registerUserRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -162,8 +162,8 @@ class UserController extends Controller
     {
         $response = $this->userService->fetchOne($id);
         return $response['status']
-            ? $this->getResponse('user', new UserResource($response['user']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('user', new UserResource($response['user']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -178,13 +178,13 @@ class UserController extends Controller
             return User::find($id);
         });
         if (!$user) {
-            return $this->getResponse('error', 'User Not Found!', 404);
+            return $this->error('User Not Found!', 404);
         }
         $response = $this->userService->updateUser($request->validated(), $user);
 
         return $response['status']
-            ? $this->getResponse("msg", "Updated user profile successfully", 200)
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            ? $this->success("msg", "Updated user profile successfully", 200)
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -198,13 +198,13 @@ class UserController extends Controller
             return User::find($id);
         });
         if (!$user) {
-            return $this->getResponse('error', 'User Not Found!', 404);
+            return $this->error('User Not Found!', 404);
         }
         $response = $this->userService->deleteUser($user);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Account Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Account Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -216,8 +216,8 @@ class UserController extends Controller
     {
         $response = $this->userService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('users', $response['users'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('users', $response['users'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -229,7 +229,7 @@ class UserController extends Controller
     {
         $response = $this->userService->fetchOneForEmployee($id);
         return $response['status']
-            ? $this->getResponse('user', new UserResource($response['user']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('user', new UserResource($response['user']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 }

@@ -64,7 +64,7 @@ class AssetsService
             if (Storage::disk('public')->exists($filePath)) {
                 Storage::disk('public')->delete($filePath);
             }
-            return $this->getResponse('error', $e->getMessage(), 500);
+            return $this->error($e->getMessage(), 500);
         }
 
     }

@@ -27,13 +27,13 @@ class SpecializationController extends Controller
     public function index()
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
         $specializations = Cache::remember('specializations', 1200, function () {
             return Specialization::all();
         });
 
-        return $this->getResponse('specializations', SpecializationResource::collection($specializations), 200);
+        return $this->success('specializations', SpecializationResource::collection($specializations), 200);
     }
 
     /**
@@ -45,8 +45,8 @@ class SpecializationController extends Controller
     {
         $response = $this->specializationService->storeSpecialization($request->validated());
         return $response['status']
-            ? $this->getResponse('msg', 'Created Specialization Successfully', 201)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Created Specialization Successfully', 201)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -57,7 +57,7 @@ class SpecializationController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
         $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
@@ -65,10 +65,10 @@ class SpecializationController extends Controller
         });
 
         if (!$specialization) {
-            return $this->getResponse('error', 'Specialization Not Found!', 404);
+            return $this->error('Specialization Not Found!', 404);
         }
 
-        return $this->getResponse('specialization', new SpecializationResource($specialization), 200);
+        return $this->success('specialization', new SpecializationResource($specialization), 200);
     }
 
     /**
@@ -84,13 +84,13 @@ class SpecializationController extends Controller
         });
 
         if (!$specialization) {
-            return $this->getResponse('error', 'Specialization Not Found!', 404);
+            return $this->error('Specialization Not Found!', 404);
         }
 
         $response = $this->specializationService->updateSpecialization($request->validated(), $specialization);
         return $response['status']
-            ? $this->getResponse('msg', 'Updated Specialization Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Updated Specialization Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -101,7 +101,7 @@ class SpecializationController extends Controller
     public function destroy($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
         $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
@@ -109,10 +109,10 @@ class SpecializationController extends Controller
         });
 
         if (!$specialization) {
-            return $this->getResponse('error', 'Specialization Not Found!', 404);
+            return $this->error('Specialization Not Found!', 404);
         }
 
         $specialization->delete();
-        return $this->getResponse('msg', 'Deleted Specialization Successfully', 200);
+        return $this->success('msg', 'Deleted Specialization Successfully', 200);
     }
 }

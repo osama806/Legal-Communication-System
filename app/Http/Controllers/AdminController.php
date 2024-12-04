@@ -31,7 +31,7 @@ class AdminController extends Controller
         $response = $this->adminService->store($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
-            : $this->getResponse("error", $response['msg'], $response['code']);
+            : $this->success("error", $response['msg'], $response['code']);
     }
 
     /**
@@ -44,7 +44,7 @@ class AdminController extends Controller
         $response = $this->adminService->login($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -54,7 +54,7 @@ class AdminController extends Controller
     public function signout()
     {
         Auth::guard('api')->logout();
-        return $this->getResponse('msg', 'Successfully logged out', 200);
+        return $this->success('msg', 'Successfully logged out', 200);
     }
 
     /**
@@ -68,9 +68,9 @@ class AdminController extends Controller
         });
 
         if ($user && $user->role->name !== 'admin') {
-            return $this->getResponse('error', 'This action is unauthorized', 422);
+            return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->getResponse("profile", new UserResource($user), 200);
+        return $this->success("profile", new UserResource($user), 200);
     }
 }

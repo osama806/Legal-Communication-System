@@ -32,8 +32,8 @@ class RateController extends Controller
     {
         $response = $this->rateService->getList($request->validated());
         return $response['status']
-            ? $this->getResponse('data', $response['rates'], 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('data', $response['rates'], 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -48,13 +48,13 @@ class RateController extends Controller
             return Lawyer::find($id);
         });
         if (!$lawyer) {
-            return $this->getResponse("error", "Lawyer Not Found!", 404);
+            return $this->success("error", "Lawyer Not Found!", 404);
         }
         $response = $this->rateService->createRate($request->validated(), $lawyer);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Created Rating Successfully', 201)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Created Rating Successfully', 201)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -66,8 +66,8 @@ class RateController extends Controller
     {
         $response = $this->rateService->showRate($id);
         return $response['status']
-            ? $this->getResponse('rate', new RateResource($response['rate']), 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('rate', new RateResource($response['rate']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -82,13 +82,13 @@ class RateController extends Controller
             return Rate::find($id);
         });
         if (!$rate) {
-            return $this->getResponse('error', 'Rate Not Found!', 404);
+            return $this->error('Rate Not Found!', 404);
         }
         $response = $this->rateService->updateRate($request->validated(), $rate);
 
         return $response['status']
-            ? $this->getResponse('msg', 'Updated Rating Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Updated Rating Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -100,8 +100,8 @@ class RateController extends Controller
     {
         $response = $this->rateService->deleteRate($id);
         return $response['status']
-            ? $this->getResponse('msg', 'Deleted Rate Successfully', 200)
-            : $this->getResponse('error', $response['msg'], $response['code']);
+            ? $this->success('msg', 'Deleted Rate Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -113,6 +113,6 @@ class RateController extends Controller
         $rates = Cache::remember('rates', 1200, function () {
             return Rate::all();
         });
-        return $this->getResponse('rates', RateResource::collection($rates), 200);
+        return $this->success('rates', RateResource::collection($rates), 200);
     }
 }
