@@ -40,7 +40,7 @@ class UpdateRatingRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->success("error", $validator->errors(), 400));
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     public function attributes()

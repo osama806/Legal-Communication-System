@@ -32,7 +32,7 @@ class EmployeeController extends Controller
         $response = $this->employeeService->getList($request->validated());
         return $response["status"]
             ? $this->success("employees", $response['employees'], 200)
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -45,7 +45,7 @@ class EmployeeController extends Controller
         $response = $this->employeeService->signup($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -54,14 +54,14 @@ class EmployeeController extends Controller
      */
     public function profile()
     {
-        $user = Cache::remember('user' . Auth::guard('api')->id(), 600, function () {
-            return User::where('id', Auth::guard('api')->id())->first();
+        $employee = Cache::remember('employee_' . Auth::guard('api')->id(), 600, function () {
+            return User::find(Auth::guard('api')->id());
         });
-        if ($user && $user->role->name !== 'employee') {
+        if ($employee && !$employee->hasRole('employee')) {
             return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->success("profile", new UserResource($user), 200);
+        return $this->success("profile", new UserResource($employee), 200);
     }
 
     /**
@@ -74,8 +74,8 @@ class EmployeeController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->error('This action is unauthorized', 422);
         }
-        $response = $this->employeeService->fetchOne($id);
 
+        $response = $this->employeeService->fetchOne($id);
         return $response['status']
             ? $this->success('employee', new UserResource($response['employee']), 200)
             : $this->error($response['msg'], $response['code']);

@@ -38,14 +38,9 @@ class UserService
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
-            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
             $plainPassword = $data['password'];
-
-            // تشفير كلمة المرور قبل إنشاء المستخدم
             $data['password'] = Hash::make($plainPassword);
             $data['avatar'] = $avatarResponse['url'];
-
-            // إنشاء المستخدم
             $user = User::create($data);
 
             // تعيين الدور
@@ -57,7 +52,6 @@ class UserService
                 throw new Exception("Role relationship not defined in User model.");
             }
 
-            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
             // تسجيل الدخول وتوليد التوكن
@@ -66,14 +60,10 @@ class UserService
                 throw new Exception('Failed to generate token');
             }
 
-            // توليد Refresh Token
             $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
-
             DB::commit();
 
-            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('users');
-
             return [
                 'status' => true,
                 'access_token' => $access_token,
@@ -97,7 +87,6 @@ class UserService
      */
     public function login(array $data)
     {
-        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
         if (!$access_token = Auth::guard('api')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
             return [
                 'status' => false,
@@ -106,7 +95,6 @@ class UserService
             ];
         }
 
-        // استرجاع المستخدم المصادق عليه
         $user = Auth::guard('api')->user();
         if (!$user) {
             return [
@@ -116,7 +104,6 @@ class UserService
             ];
         }
 
-        // التحقق من دور المستخدم
         if (!$user->hasRole('user')) {
             return [
                 'status' => false,
@@ -125,9 +112,7 @@ class UserService
             ];
         }
 
-        // إنشاء Refresh Token
         $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
-
         return [
             'status' => true,
             'access_token' => $access_token,
@@ -163,7 +148,8 @@ class UserService
                 $user->save();
             }
 
-            Cache::forget('user' . $user->id);
+            Cache::forget('users');
+            Cache::forget('user_' . $user->id);
             return ['status' => true];
         } catch (Exception $e) {
 
@@ -183,8 +169,6 @@ class UserService
     public function updatePassword(array $data)
     {
         $user = Auth::user();
-
-        // Check if the current password matches
         if (!Hash::check($data['current_password'], $user->password)) {
             return [
                 'status' => false,
@@ -193,10 +177,9 @@ class UserService
             ];
         }
 
-        // Update the user's password
         $user->password = Hash::make($data['new_password']);
         $user->save();
-        Cache::forget('user' . $user->id);
+        Cache::forget('user_' . $user->id);
         return ['status' => true];
     }
 
@@ -236,18 +219,12 @@ class UserService
     public function signupUser(array $data)
     {
         try {
-            // تحميل الصورة باستخدام الخدمة
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
-            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
             $plainPassword = $data['password'];
-
-            // تشفير كلمة المرور قبل إنشاء المستخدم
             $data['password'] = Hash::make($plainPassword);
             $data['avatar'] = $avatarResponse['url'];
-
-            // إنشاء المستخدم
             $user = User::create($data);
 
             // تعيين الدور
@@ -259,22 +236,17 @@ class UserService
                 throw new Exception("Role relationship not defined in User model.");
             }
 
-            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');
             }
 
-            // توليد Refresh Token
             $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
             DB::commit();
 
-            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('users');
-
             return [
                 'status' => true,
                 'access_token' => $access_token,
@@ -327,7 +299,8 @@ class UserService
                 $user->avatar = $avatarResponse['url'];
                 $user->save();
             }
-            Cache::forget('user' . $user->id);
+            Cache::forget('users');
+            Cache::forget('user_' . $user->id);
             return ['status' => true];
 
         } catch (Exception $e) {
@@ -356,6 +329,7 @@ class UserService
             }
             $user->delete();
             Cache::forget('users');
+            Cache::forget('user_' . $user->id);
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
@@ -390,7 +364,6 @@ class UserService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'users' => $this->formatPagination($users, UserResource::class, 'users')
@@ -411,8 +384,7 @@ class UserService
                 'code' => 422
             ];
         }
-
-        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+        $user = Cache::remember('user_' . $id, 600, function () use ($id) {
             return User::where('id', $id)->whereHas('role', function ($query) {
                 $query->where('name', 'user');
             })->first();
@@ -425,7 +397,6 @@ class UserService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'user' => $user
@@ -446,8 +417,7 @@ class UserService
                 'code' => 422
             ];
         }
-
-        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+        $user = Cache::remember('user_' . $id, 600, function () use ($id) {
             return User::where('id', $id)->whereHas('role', function ($query) {
                 $query->where('name', 'user');
             })->first();
@@ -460,7 +430,6 @@ class UserService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'user' => $user

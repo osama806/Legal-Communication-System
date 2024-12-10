@@ -31,7 +31,7 @@ class AdminController extends Controller
         $response = $this->adminService->store($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -40,8 +40,8 @@ class AdminController extends Controller
      */
     public function profile()
     {
-        $admin = Cache::remember('admin' . Auth::guard('api')->id(), 600, function () {
-            return User::where('id', Auth::guard('api')->id())->first();
+        $admin = Cache::remember('admin_' . Auth::guard('api')->id(), 600, function () {
+            return User::find(Auth::guard('api')->id());
         });
 
         if ($admin && !$admin->hasRole('admin')) {

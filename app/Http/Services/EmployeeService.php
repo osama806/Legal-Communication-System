@@ -114,7 +114,7 @@ class EmployeeService
      */
     public function fetchOne(string $id)
     {
-        $employee = Cache::remember('employee' . $id, 600, function () use ($id) {
+        $employee = Cache::remember('employee_' . $id, 600, function () use ($id) {
             return User::where('id', $id)->whereHas('role', function ($query) {
                 return $query->where('name', 'employee');
             })->first();

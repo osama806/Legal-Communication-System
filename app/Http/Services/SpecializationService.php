@@ -53,7 +53,8 @@ class SpecializationService
             }
 
             $specialization->update($filteredData);
-            Cache::forget('specialization' . $specialization->id);
+            Cache::forget('specializations');
+            Cache::forget('specialization_' . $specialization->id);
             return ['status' => true];
 
         } catch (Exception $e) {

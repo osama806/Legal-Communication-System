@@ -60,7 +60,7 @@ class SpecializationController extends Controller
             return $this->error('This action is unauthorized', 422);
         }
 
-        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+        $specialization = Cache::remember('specialization_' . $id, 600, function () use ($id) {
             return Specialization::find($id);
         });
 
@@ -79,7 +79,7 @@ class SpecializationController extends Controller
      */
     public function update(UpdateSpecializationRequest $request, $id)
     {
-        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+        $specialization = Cache::remember('specialization_' . $id, 600, function () use ($id) {
             return Specialization::find($id);
         });
 
@@ -104,7 +104,7 @@ class SpecializationController extends Controller
             return $this->error('This action is unauthorized', 422);
         }
 
-        $specialization = Cache::remember('specialization' . $id, 600, function () use ($id) {
+        $specialization = Cache::remember('specialization_' . $id, 600, function () use ($id) {
             return Specialization::find($id);
         });
 

@@ -118,11 +118,11 @@ class LawyerService
      */
     public function send(array $data)
     {
-        $agency = Cache::remember('agency' . $data['agency_id'], 600, function () use ($data) {
+        $agency = Cache::remember('agency_' . $data['agency_id'], 600, function () use ($data) {
             return Agency::find($data['agency_id']);
         });
 
-        $representative = Cache::remember('representative' . $data['representative_id'], 600, function () use ($data) {
+        $representative = Cache::remember('representative_' . $data['representative_id'], 600, function () use ($data) {
             return Representative::find($data['representative_id']);
         });
 
@@ -144,7 +144,7 @@ class LawyerService
             Notification::send($representative, new LawyerToRepresentativeNotification($agency));
             DB::commit();
 
-            Cache::forget('agency' . $agency->id);
+            Cache::forget('agency_' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
             DB::rollBack();
@@ -203,7 +203,7 @@ class LawyerService
      */
     public function destroy(Lawyer $lawyer)
     {
-        if (Auth::user()->role->name !== 'employee') {
+        if (!Auth::user()->hasRole('employee')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized.',
@@ -248,7 +248,7 @@ class LawyerService
             ];
         }
 
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
 
@@ -280,10 +280,10 @@ class LawyerService
                 'code' => 422
             ];
         }
-
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
+
         if (!$lawyer) {
             return [
                 'status' => false,
@@ -291,7 +291,6 @@ class LawyerService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'lawyer' => $lawyer

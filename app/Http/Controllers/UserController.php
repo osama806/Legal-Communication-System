@@ -89,7 +89,7 @@ class UserController extends Controller
         $response = $this->userService->register($registerUserRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -98,10 +98,10 @@ class UserController extends Controller
      */
     public function profile()
     {
-        $user = Cache::remember('user' . Auth::guard('api')->id(), 600, function () {
-            return User::where('id', Auth::guard('api')->id())->first();
+        $user = Cache::remember('user_' . Auth::guard('api')->id(), 600, function () {
+            return User::find(Auth::guard('api')->id());
         });
-        if ($user && $user->role->name !== 'user') {
+        if ($user && !$user->hasRole('user')) {
             return $this->error('This action is unauthorized', 422);
         }
 
@@ -118,7 +118,7 @@ class UserController extends Controller
         $response = $this->userService->updateProfile($updateProfileRequest->validated());
         return $response['status']
             ? $this->success("msg", "User updated profile successfully", 200)
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -153,7 +153,7 @@ class UserController extends Controller
         $response = $this->userService->signupUser($registerUserRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -177,17 +177,17 @@ class UserController extends Controller
      */
     public function updateUser(UpdateUserInfoRequest $request, $id)
     {
-        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+        $user = Cache::remember('user_' . $id, 600, function () use ($id) {
             return User::find($id);
         });
         if (!$user) {
             return $this->error('User Not Found!', 404);
         }
-        $response = $this->userService->updateUser($request->validated(), $user);
 
+        $response = $this->userService->updateUser($request->validated(), $user);
         return $response['status']
             ? $this->success("msg", "Updated user profile successfully", 200)
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -197,14 +197,14 @@ class UserController extends Controller
      */
     public function destroyUser($id)
     {
-        $user = Cache::remember('user' . $id, 600, function () use ($id) {
+        $user = Cache::remember('user_' . $id, 600, function () use ($id) {
             return User::find($id);
         });
         if (!$user) {
             return $this->error('User Not Found!', 404);
         }
-        $response = $this->userService->deleteUser($user);
 
+        $response = $this->userService->deleteUser($user);
         return $response['status']
             ? $this->success('msg', 'Deleted Account Successfully', 200)
             : $this->error($response['msg'], $response['code']);

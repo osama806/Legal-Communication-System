@@ -39,8 +39,8 @@ class AuthService
         }
 
         // استرجاع المستخدم المصادق عليه
-        $user = Auth::guard($guard)->user();
-        if (!$user) {
+        $authenticated = Auth::guard($guard)->user();
+        if (!$authenticated) {
             return [
                 'status' => false,
                 'msg' => ucfirst($guard) . ' not found!',
@@ -50,7 +50,7 @@ class AuthService
 
         // التحقق من دور المستخدم
         if ($guard === 'lawyer' || $guard === 'representative') {
-            if ($user->role->name !== $role) {
+            if ($authenticated->role->name !== $role) {
                 return [
                     'status' => false,
                     'msg' => 'Does not have ' . $role . ' privileges!',
@@ -58,7 +58,7 @@ class AuthService
                 ];
             }
         } else {
-            if (!$user->hasRole($role)) {
+            if (!$authenticated->hasRole($role)) {
                 return [
                     'status' => false,
                     'msg' => 'Does not have ' . $role . ' privileges!',
@@ -68,7 +68,7 @@ class AuthService
         }
 
         // إنشاء Refresh Token
-        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
+        $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($authenticated);
 
         return [
             'status' => true,
@@ -103,11 +103,10 @@ class AuthService
             ];
         }
 
-        $role = Auth::guard($guard)->user()->role->name;
         Auth::guard($guard)->logout();
         return [
             'status' => true,
-            'role' => $role,
+            'role' => Auth::guard($guard)->user()->role->name,
         ];
     }
 

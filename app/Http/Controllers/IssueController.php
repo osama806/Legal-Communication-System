@@ -58,7 +58,7 @@ class IssueController extends Controller
      */
     public function show($id)
     {
-        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
+        $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
@@ -76,14 +76,14 @@ class IssueController extends Controller
      */
     public function updateStatus(UpdateStatusRequest $request, $id)
     {
-        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
+        $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
             return $this->error('Issue Not Found', 404);
         }
-        $response = $this->issueService->changeStatus($request->validated(), $issue);
 
+        $response = $this->issueService->changeStatus($request->validated(), $issue);
         return $response['status']
             ? $this->success('msg', 'Changed Issue Status Successfully', 200)
             : $this->error($response['msg'], $response['code']);
@@ -97,14 +97,14 @@ class IssueController extends Controller
      */
     public function endIssue(FinishIssueStatusRequest $request, $id)
     {
-        $issue = Cache::remember('issue' . $id, 600, function () use ($id) {
+        $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
             return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
         if (!$issue) {
             return $this->error('Issue Not Found', 404);
         }
-        $response = $this->issueService->endIssue($request->validated(), $issue);
 
+        $response = $this->issueService->endIssue($request->validated(), $issue);
         return $response['status']
             ? $this->success('msg', 'Ended Issue Successfully', 200)
             : $this->error($response['msg'], $response['code']);
@@ -156,15 +156,15 @@ class IssueController extends Controller
      */
     public function showForUser($id)
     {
-        $issue = Cache::remember('issueUser' . Auth::guard('api')->id(), 600, function () use ($id) {
+        $issue = Cache::remember('issue_' . Auth::guard('api')->id(), 600, function () use ($id) {
             return Issue::whereHas('agency', function ($query) {
                 return $query->where('user_id', Auth::guard('api')->id());
             })->with('agency')->find($id);
         });
+
         if (!$issue) {
             return $this->error('Issue Not Found', 404);
         }
-
         return $this->success('issue', new IssueResource($issue), 200);
     }
 
@@ -191,14 +191,13 @@ class IssueController extends Controller
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return $this->error('This action is unauthorized', 422);
         }
-
-        $issue = Cache::remember('issueAdminEmployee', 600, function () use ($id) {
+        $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
             return Issue::find($id);
         });
+
         if (!$issue) {
             return $this->error('Issue Not Found', 404);
         }
-
         return $this->success('issue', new IssueResource($issue), 200);
     }
 }

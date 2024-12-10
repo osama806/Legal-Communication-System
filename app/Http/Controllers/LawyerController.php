@@ -52,7 +52,7 @@ class LawyerController extends Controller
         $response = $this->lawyerService->signupLawyer($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -61,13 +61,13 @@ class LawyerController extends Controller
      */
     public function profile()
     {
-        $lawyer = Cache::remember('lawyer' . Auth::guard('lawyer')->id(), 600, function () {
+        $lawyer = Cache::remember('lawyer_' . Auth::guard('lawyer')->id(), 600, function () {
             return Lawyer::where('id', Auth::guard('lawyer')->id())->first();
         });
+
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
             return $this->error('This action is unauthorized', 422);
         }
-
         return $this->success("profile", new LawyerResource($lawyer), 200);
     }
 
@@ -78,9 +78,10 @@ class LawyerController extends Controller
      */
     public function agencyAccepted(StoreLawyerForAgencyRequest $request)
     {
-        $representative = Cache::remember("representative" . Auth::guard("representative")->id(), 600, function () use ($request) {
+        $representative = Cache::remember("representative_" . Auth::guard("representative")->id(), 600, function () use ($request) {
             return Representative::find($request['representative_id']);
         });
+
         $response = $this->lawyerService->send($request->validated());
         return $response['status']
             ? $this->success('msg', 'Send request to representative ' . $representative->name, 200)
@@ -107,11 +108,12 @@ class LawyerController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->error('This action is unauthorized', 422);
         }
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
+
         if (!$lawyer) {
-            return $this->success("error", "Lawyer Not Found!", 404);
+            return $this->error("Lawyer Not Found!", 404);
         }
         return $this->success("lawyer", new LawyerResource($lawyer), 200);
     }
@@ -124,16 +126,17 @@ class LawyerController extends Controller
      */
     public function update(UpdateLawyerInfoRequest $request, $id)
     {
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
         if (!$lawyer) {
             return $this->error('Lawyer Not Found!', 404);
         }
+
         $response = $this->lawyerService->update($request->validated(), $lawyer);
         return $response['status']
             ? $this->success("msg", "Lawyer updated profile successfully", 200)
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -143,14 +146,14 @@ class LawyerController extends Controller
      */
     public function destroy($id)
     {
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
         if (!$lawyer) {
             return $this->error('Lawyer Not Found!', 404);
         }
-        $response = $this->lawyerService->destroy($lawyer);
 
+        $response = $this->lawyerService->destroy($lawyer);
         return $response['status']
             ? $this->success('msg', 'Deleted Account Successfully', 200)
             : $this->error($response['msg'], $response['code']);

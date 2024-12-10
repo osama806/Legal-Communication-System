@@ -51,7 +51,7 @@ class RepresentativeController extends Controller
         $response = $this->representativeService->signupRepresentative($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -60,13 +60,13 @@ class RepresentativeController extends Controller
      */
     public function profile()
     {
-        $representative = Cache::remember('representative' . Auth::guard('representative')->id(), 600, function () {
-            return Representative::where('id', Auth::guard('representative')->id())->first();
+        $representative = Cache::remember('representative_' . Auth::guard('representative')->id(), 600, function () {
+            return Representative::find(Auth::guard('representative')->id());
         });
+
         if ($representative && $representative->role->name !== 'representative') {
             return $this->error('This action is unauthorized', 422);
         }
-
         return $this->success("profile", new RepresentativeResource($representative), 200);
     }
 
@@ -78,7 +78,7 @@ class RepresentativeController extends Controller
     public function agencyAcceptance(StoreRepresentativeForAgencyRequest $request)
     {
         $response = $this->representativeService->sendResponse($request->validated());
-        $agency = Cache::remember('agency' . $request['agency_id'], 600, function () use ($request) {
+        $agency = Cache::remember('agency_' . $request['agency_id'], 600, function () use ($request) {
             return Agency::find($request['agency_id']);
         });
 
@@ -107,11 +107,12 @@ class RepresentativeController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
             return $this->error('This action is unauthorized', 422);
         }
-        $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
+        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
+
         if (!$representative) {
-            return $this->success("error", "Representative Not Found", 404);
+            return $this->error("Representative Not Found", 404);
         }
         return $this->success("representative", new RepresentativeResource($representative), 200);
     }
@@ -124,17 +125,17 @@ class RepresentativeController extends Controller
      */
     public function update(UpdateRepresentativeInfoRequest $request, $id)
     {
-        $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
+        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
             return $this->error('Representative Not Found!', 404);
         }
-        $response = $this->representativeService->update($request->validated(), $representative);
 
+        $response = $this->representativeService->update($request->validated(), $representative);
         return $response['status']
             ? $this->success("msg", "Representative updated profile successfully", 200)
-            : $this->success("error", $response['msg'], $response['code']);
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -144,14 +145,14 @@ class RepresentativeController extends Controller
      */
     public function destroy($id)
     {
-        $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
+        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
             return $this->error('Representative Not Found!', 404);
         }
-        $response = $this->representativeService->destroy($representative);
 
+        $response = $this->representativeService->destroy($representative);
         return $response['status']
             ? $this->success('msg', 'Deleted Account Successfully', 200)
             : $this->error($response['msg'], $response['code']);
@@ -180,11 +181,11 @@ class RepresentativeController extends Controller
         if (!Auth::guard('lawyer')->check()) {
             return $this->error('This action is unauthorized', 422);
         }
-        $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
+        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->success("error", "Representative Not Found", 404);
+            return $this->error("Representative Not Found", 404);
         }
         return $this->success("representative", new RepresentativeResource($representative), 200);
     }
@@ -212,11 +213,11 @@ class RepresentativeController extends Controller
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
             return $this->error('This action is unauthorized', 422);
         }
-        $representative = Cache::remember('representative' . $id, 600, function () use ($id) {
+        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
             return Representative::find($id);
         });
         if (!$representative) {
-            return $this->success("error", "Representative Not Found", 404);
+            return $this->error("Representative Not Found", 404);
         }
         return $this->success("representative", new RepresentativeResource($representative), 200);
     }

@@ -22,7 +22,7 @@ class UpdateStatusRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->success("error", "This action is unauthorized", 422));
+        throw new HttpResponseException($this->error("This action is unauthorized", 422));
     }
 
     /**

@@ -3,17 +3,15 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\AgencyResource;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Notifications\UserToLawyerNotification;
 use App\Traits\PaginateResourceTrait;
-use Auth;
-use Cache;
 use Carbon\Carbon;
-use DB;
-use Exception;
-use Illuminate\Support\Facades\Notification;
-use Log;
 
 class AgencyService
 {
@@ -51,7 +49,7 @@ class AgencyService
      */
     public function createAgency(array $data)
     {
-        $lawyer = Cache::remember('lawyer' . $data["lawyer_id"], 600, function () use ($data) {
+        $lawyer = Cache::remember('lawyer_' . $data["lawyer_id"], 600, function () use ($data) {
             return Lawyer::find($data["lawyer_id"]);
         });
 
@@ -94,7 +92,7 @@ class AgencyService
                     'code' => 403
                 ];
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return [
                 'status' => false,

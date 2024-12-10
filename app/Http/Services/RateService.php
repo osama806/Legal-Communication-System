@@ -23,7 +23,6 @@ class RateService
         $rates = Cache::remember("rates", 1200, function () use ($data) {
             return Rate::filter($data)->paginate($data['per_page'] ?? 10);
         });
-
         if ($rates->isEmpty()) {
             return [
                 'status' => false,
@@ -89,10 +88,10 @@ class RateService
                 'code' => 422
             ];
         }
-
-        $rate = Cache::remember('rate' . $id, 600, function () use ($id) {
+        $rate = Cache::remember('rate_' . $id, 600, function () use ($id) {
             return Rate::find($id);
         });
+
         if (!$rate) {
             return [
                 'status' => false,
@@ -100,7 +99,6 @@ class RateService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'rate' => $rate,
@@ -137,7 +135,7 @@ class RateService
             }
             $rate->update($filteredData);
 
-            Cache::forget('rate' . $rate->id);
+            Cache::forget('rate_' . $rate->id);
             return ['status' => true];
         } catch (Exception $e) {
             return [
@@ -163,7 +161,7 @@ class RateService
             ];
         }
 
-        $rate = Cache::remember('rate' . $id, 600, function () use ($id) {
+        $rate = Cache::remember('rate_' . $id, 600, function () use ($id) {
             return Rate::find($id);
         });
         if (!$rate) {
@@ -175,7 +173,7 @@ class RateService
         }
 
         $rate->delete();
-        Cache::forget('rate' . $rate->id);
+        Cache::forget('rate_' . $rate->id);
         return ['status' => true];
     }
 }

@@ -46,7 +46,6 @@ class AgencyController extends Controller
     public function store(StoreAgencyRequest $request)
     {
         $response = $this->agencyService->createAgency($request->validated());
-
         return $response['status']
             ? $this->success('msg', 'Send Request To Lawyer Successfully', 200)
             : $this->error($response['msg'], $response['code']);
@@ -66,7 +65,7 @@ class AgencyController extends Controller
                 'code' => 422
             ];
         }
-        $agency = Cache::remember('agency' . $id, 600, function () use ($id) {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
             return Agency::find($id);
         });
 
@@ -83,7 +82,7 @@ class AgencyController extends Controller
      */
     public function destroy(string $id)
     {
-        $agency = Cache::remember('agency' . $id, 600, function () use ($id) {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
             return Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
         });
         if (!$agency) {
@@ -135,7 +134,7 @@ class AgencyController extends Controller
                 'code' => 422
             ];
         }
-        $agency = Cache::remember('agencyForUser' . $id, 600, function () use ($id) {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
             return Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
         });
 
@@ -172,7 +171,7 @@ class AgencyController extends Controller
                 'code' => 422
             ];
         }
-        $agency = Cache::remember('agencyForLawyer' . $id, 600, function () use ($id) {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
             return Agency::where('id', $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
         });
 
@@ -209,7 +208,7 @@ class AgencyController extends Controller
                 'code' => 422
             ];
         }
-        $agency = Cache::remember('agencyForRepresentative' . $id, 600, function () use ($id) {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
             return Agency::where('id', $id)->where('representative_id', Auth::guard('representative')->id())->first();
         });
 

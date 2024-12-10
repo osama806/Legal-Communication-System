@@ -44,14 +44,14 @@ class RateController extends Controller
      */
     public function store(StoreRatingRequest $request, $id)
     {
-        $lawyer = Cache::remember('lawyer' . $id, 600, function () use ($id) {
+        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
         });
         if (!$lawyer) {
-            return $this->success("error", "Lawyer Not Found!", 404);
+            return $this->error("Lawyer Not Found!", 404);
         }
-        $response = $this->rateService->createRate($request->validated(), $lawyer);
 
+        $response = $this->rateService->createRate($request->validated(), $lawyer);
         return $response['status']
             ? $this->success('msg', 'Created Rating Successfully', 201)
             : $this->error($response['msg'], $response['code']);
@@ -78,14 +78,14 @@ class RateController extends Controller
      */
     public function update(UpdateRatingRequest $request, $id)
     {
-        $rate = Cache::remember('rate' . $id, 600, function () use ($id) {
+        $rate = Cache::remember('rate_' . $id, 600, function () use ($id) {
             return Rate::find($id);
         });
         if (!$rate) {
             return $this->error('Rate Not Found!', 404);
         }
-        $response = $this->rateService->updateRate($request->validated(), $rate);
 
+        $response = $this->rateService->updateRate($request->validated(), $rate);
         return $response['status']
             ? $this->success('msg', 'Updated Rating Successfully', 200)
             : $this->error($response['msg'], $response['code']);

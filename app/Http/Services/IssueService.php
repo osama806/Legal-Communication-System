@@ -24,7 +24,6 @@ class IssueService
         $issues = Cache::remember("issues", 1200, function () use ($data) {
             return Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
         });
-
         if ($issues->isEmpty()) {
             return [
                 'status' => false,
@@ -46,7 +45,7 @@ class IssueService
      */
     public function storeIssue(array $data)
     {
-        $agency = Cache::remember('agency' . $data["agency_id"], 600, function () use ($data) {
+        $agency = Cache::remember('agency_' . $data["agency_id"], 600, function () use ($data) {
             return Agency::find($data["agency_id"]);
         });
 
@@ -79,6 +78,8 @@ class IssueService
             ]);
 
             Cache::forget('issues');
+            Cache::forget('issuesUser');
+            Cache::forget('issuesAdminEmployee');
             return ['status' => true];
         } catch (Exception $exception) {
             return [
@@ -98,7 +99,7 @@ class IssueService
     public function endIssue(array $data, Issue $issue)
     {
         try {
-            $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+            $agency = Cache::remember('agency_' . $issue->agency_id, 600, function () use ($issue) {
                 return Agency::find($issue->agency_id);
             });
 
@@ -150,7 +151,7 @@ class IssueService
             $issue->is_active = false;
             $issue->save();
 
-            Cache::forget('issue' . $issue->id);
+            Cache::forget('issue_' . $issue->id);
             return ['status' => true];
 
         } catch (Exception $exception) {
@@ -171,7 +172,7 @@ class IssueService
     public function changeStatus(array $data, Issue $issue)
     {
         try {
-            $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+            $agency = Cache::remember('agency_' . $issue->agency_id, 600, function () use ($issue) {
                 return Agency::find($issue->agency_id);
             });
 
@@ -194,7 +195,7 @@ class IssueService
             $issue->status = $data['status'];
             $issue->save();
 
-            Cache::forget('issue' . $issue->id);
+            Cache::forget('issue_' . $issue->id);
             return ['status' => true];
 
         } catch (Exception $exception) {
@@ -230,7 +231,7 @@ class IssueService
             ];
         }
 
-        $agency = Cache::remember('agency' . $issue->agency_id, 600, function () use ($issue) {
+        $agency = Cache::remember('agency_' . $issue->agency_id, 600, function () use ($issue) {
             return Agency::find($issue->agency_id);
         });
 

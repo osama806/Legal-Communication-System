@@ -61,15 +61,15 @@ class RepresentativeService
      */
     public function sendResponse(array $data)
     {
-        $agency = Cache::remember('agency' . $data['agency_id'], 600, function () use ($data) {
+        $agency = Cache::remember('agency_' . $data['agency_id'], 600, function () use ($data) {
             return Agency::find($data['agency_id']);
         });
 
-        $user = Cache::remember('user' . $agency->user_id, 600, function () use ($agency) {
+        $user = Cache::remember('user_' . $agency->user_id, 600, function () use ($agency) {
             return User::find($agency->user_id);
         });
 
-        $lawyer = Cache::remember('lawyer' . $agency->lawyer_id, 600, function () use ($agency) {
+        $lawyer = Cache::remember('lawyer_' . $agency->lawyer_id, 600, function () use ($agency) {
             return Lawyer::find($agency->lawyer_id);
         });
 
@@ -96,7 +96,7 @@ class RepresentativeService
             Notification::send([$user, $lawyer], new RepresentativeToAllNotification($agency));
             DB::commit();
 
-            Cache::forget('agency' . $agency->id);
+            Cache::forget('agency_' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
             DB::rollBack();
@@ -196,7 +196,7 @@ class RepresentativeService
                 $representative->save();
             }
 
-            Cache::forget('representative' . $representative->id);
+            Cache::forget('representative_' . $representative->id);
             return ['status' => true];
         } catch (Exception $e) {
             return [
@@ -228,7 +228,7 @@ class RepresentativeService
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
             $representative->delete();
-            Cache::forget('representative' . $representative->id);
+            Cache::forget('representative_' . $representative->id);
             return ['status' => true];
 
         } catch (TokenInvalidException $e) {
