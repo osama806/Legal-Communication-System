@@ -17,7 +17,7 @@ class IndexFilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
+        return Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('user');
     }
 
     public function failedAuthorization()

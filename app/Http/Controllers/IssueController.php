@@ -173,7 +173,7 @@ class IssueController extends Controller
      * @param \App\Http\Requests\Issue\FilterForAdminAndEmployee $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getForAdminAndEmployee(FilterForAdminAndEmployee $request)
+    public function getAll(FilterForAdminAndEmployee $request)
     {
         $response = $this->issueService->AdminAndEmployee($request->validated());
         return $response['status']
@@ -186,7 +186,7 @@ class IssueController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showForAdminAndEmployee($id)
+    public function showOne($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return $this->error('This action is unauthorized', 422);

@@ -159,7 +159,7 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get list of representatives forward to lawyer
+     * Get list of representatives by lawyer
      * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -172,7 +172,7 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get representative info forward to lawyer
+     * Get representative info by lawyer
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -191,11 +191,11 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get list of representatives forward to employee
+     * Get list of representatives by employee
      * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexForEmployee(FilterForEmployeeRequest $request)
+    public function getAll(FilterForEmployeeRequest $request)
     {
         $response = $this->representativeService->getList($request->validated());
         return $response['status']
@@ -204,11 +204,11 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get representative info forward to employee
+     * Get representative info by employee
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showForEmployee($id)
+    public function showOne($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
             return $this->error('This action is unauthorized', 422);

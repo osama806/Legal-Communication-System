@@ -211,11 +211,11 @@ class UserController extends Controller
     }
 
     /**
-     * Get list of users forward to employee
+     * Get list of users by employee
      * @param \App\Http\Requests\User\FilterForEmployeeRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexForEmployee(FilterForEmployeeRequest $request)
+    public function getAll(FilterForEmployeeRequest $request)
     {
         $response = $this->userService->getList($request->validated());
         return $response['status']
@@ -228,7 +228,7 @@ class UserController extends Controller
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showForEmployee($id)
+    public function showOne($id)
     {
         $response = $this->userService->fetchOneForEmployee($id);
         return $response['status']

@@ -17,7 +17,7 @@ class UpdateRatingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::guard('api')->user()->hasRole('user');
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('user');
     }
 
     public function failedAuthorization()

@@ -6,7 +6,6 @@ use App\Http\Requests\Rate\IndexFilterRequest;
 use App\Http\Requests\Rate\StoreRatingRequest;
 use App\Http\Requests\Rate\UpdateRatingRequest;
 use App\Http\Resources\RateResource;
-use App\Models\Lawyer;
 use App\Models\Rate;
 use App\Http\Services\RateService;
 use App\Traits\ResponseTrait;
@@ -24,7 +23,7 @@ class RateController extends Controller
     }
 
     /**
-     * Display a listing of the rates
+     * Display a listing of the rates by admin & employee
      * @param \App\Http\Requests\Rate\IndexFilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -39,26 +38,18 @@ class RateController extends Controller
     /**
      * Store a newly created rating in storage by user.
      * @param \App\Http\Requests\Rate\StoreRatingRequest $request
-     * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function store(StoreRatingRequest $request, $id)
+    public function store(StoreRatingRequest $request)
     {
-        $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
-            return Lawyer::find($id);
-        });
-        if (!$lawyer) {
-            return $this->error("Lawyer Not Found!", 404);
-        }
-
-        $response = $this->rateService->createRate($request->validated(), $lawyer);
+        $response = $this->rateService->createRate($request->validated());
         return $response['status']
             ? $this->success('msg', 'Created Rating Successfully', 201)
             : $this->error($response['msg'], $response['code']);
     }
 
     /**
-     * Display the specified rate.
+     * Display the specified rate by admin & employee.
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -79,7 +70,7 @@ class RateController extends Controller
     public function update(UpdateRatingRequest $request, $id)
     {
         $rate = Cache::remember('rate_' . $id, 600, function () use ($id) {
-            return Rate::find($id);
+            return Rate::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
         });
         if (!$rate) {
             return $this->error('Rate Not Found!', 404);
@@ -92,7 +83,7 @@ class RateController extends Controller
     }
 
     /**
-     * Remove the specified rate from storage.
+     * Remove the specified rate from storage by user & employee.
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */

@@ -40,12 +40,12 @@ class RateService
     /**
      * Store a newly created rating in storage.
      * @param array $data
-     * @param \App\Models\Lawyer $lawyer
      * @return array
      */
-    public function createRate(array $data, Lawyer $lawyer)
+    public function createRate(array $data)
     {
         try {
+            $lawyer = Lawyer::find($data['lawyer_id']);
             $rate = Rate::where("user_id", Auth::guard('api')->id())->where('lawyer_id', $lawyer->id)->first();
             if ($rate) {
                 return [
@@ -81,7 +81,7 @@ class RateService
      */
     public function showRate(string $id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized',
@@ -113,14 +113,6 @@ class RateService
      */
     public function updateRate(array $data, Rate $rate)
     {
-        if ($rate->user_id != Auth::guard('api')->id()) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422,
-            ];
-        }
-
         try {
             $filteredData = array_filter($data, function ($value) {
                 return !is_null($value) && trim($value) !== '';
@@ -153,17 +145,17 @@ class RateService
      */
     public function deleteRate(string $id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('admin')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized',
                 'code' => 422
             ];
         }
+        $rate = Auth::guard('api')->user()->hasRole('user')
+            ? Rate::where('id', $id)->where('user_id', Auth::guard('api')->id())->first()
+            : Rate::find($id);
 
-        $rate = Cache::remember('rate_' . $id, 600, function () use ($id) {
-            return Rate::find($id);
-        });
         if (!$rate) {
             return [
                 'status' => false,
@@ -173,7 +165,7 @@ class RateService
         }
 
         $rate->delete();
-        Cache::forget('rate_' . $rate->id);
+        Cache::forget('rates');
         return ['status' => true];
     }
 }

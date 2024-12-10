@@ -17,7 +17,7 @@ class StoreRatingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::guard('api')->user()->hasRole('user');
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('user');
     }
 
     public function failedAuthorization()
@@ -33,6 +33,7 @@ class StoreRatingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            "lawyer_id" => "required|numeric|min:1|exists:lawyers,id",
             "rating" => "required|numeric|min:1|max:5",
             "review" => "nullable|string|min:3|max:256",
         ];
@@ -46,6 +47,7 @@ class StoreRatingRequest extends FormRequest
     public function attributes()
     {
         return [
+            "lawyer_id" => "Lawyer number",
             "rating" => "Rating",
             "review" => "Review",
         ];
@@ -59,6 +61,7 @@ class StoreRatingRequest extends FormRequest
             'numeric' => 'The :attribute must be a numeric value.',
             'max' => ':attribute must not exceed :max characters.',
             'min' => ':attribute must be at least :min characters long.',
+            'exists' => 'The specified :attribute does not exist in lawyers table.',
         ];
     }
 
