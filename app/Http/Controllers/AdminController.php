@@ -35,19 +35,19 @@ class AdminController extends Controller
     }
 
     /**
-     * Get account info by admin
+     * Get account info
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function profile()
     {
-        $user = Cache::remember('user' . Auth::guard('api')->id(), 600, function () {
+        $admin = Cache::remember('admin' . Auth::guard('api')->id(), 600, function () {
             return User::where('id', Auth::guard('api')->id())->first();
         });
 
-        if ($user && $user->role->name !== 'admin') {
+        if ($admin && !$admin->hasRole('admin')) {
             return $this->error('This action is unauthorized', 422);
         }
 
-        return $this->success("profile", new UserResource($user), 200);
+        return $this->success("profile", new UserResource($admin), 200);
     }
 }
