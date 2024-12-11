@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourtController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LawyerController;
@@ -36,6 +37,7 @@ Route::prefix("v1")->group(function () {
             Route::get("get-issues/{id}", [IssueController::class, "showOne"]);
             Route::apiResource("get-employees", EmployeeController::class)->except(["update", "destroy"]);
             Route::apiResource("get-lawyers", LawyerController::class)->except(["update", "destroy"]);
+            Route::apiResource("get-courts", CourtController::class)->only(["index", "show"]);
             Route::apiResource("get-representatives", RepresentativeController::class)->except(["update", "destroy"]);
             Route::apiResource('get-agencies', AgencyController::class)->only(['index', 'show']);
             Route::apiResource('get-rates', RateController::class)->only(['index', 'show']);
@@ -61,6 +63,7 @@ Route::prefix("v1")->group(function () {
             });
 
             Route::apiResource('fetch-lawyers', LawyerController::class)->except('store');
+            Route::apiResource('courts', CourtController::class);
             Route::apiResource('fetch-specializations', SpecializationController::class)->except('store');
             Route::get("get-issues", [IssueController::class, "getAll"]);
             Route::get("get-issues/{id}", [IssueController::class, "showOne"]);
@@ -110,6 +113,7 @@ Route::prefix("v1")->group(function () {
             });
 
             Route::apiResource('/', LawyerController::class)->only(['index', 'show']);
+            Route::apiResource("fetch-courts", CourtController::class)->only(["index", "show"]);
             Route::apiResource('get-issues', IssueController::class)->except(['update']);
             Route::get('get-representatives', [RepresentativeController::class, 'indexForLawyer']);
             Route::get('get-representatives/{id}', [RepresentativeController::class, 'showForLawyer']);
@@ -129,5 +133,6 @@ Route::prefix("v1")->group(function () {
             Route::get('get-agencies/{id}', 'showForRepresentative');
         });
         Route::apiResource('all-lawyers', LawyerController::class)->only(['index', 'show']);
+        Route::apiResource("all-courts", CourtController::class)->only(["index", "show"]);
     });
 });
