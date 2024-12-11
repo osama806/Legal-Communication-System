@@ -18,7 +18,7 @@ class Court extends Model
      * Defines a one-to-many relationship with the Court_room model.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function courtRooms(): HasMany
+    public function court_rooms(): HasMany
     {
         return $this->hasMany(Court_room::class);
     }

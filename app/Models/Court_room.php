@@ -13,7 +13,7 @@ class Court_room extends Model
 
     protected $fillable = [
         'name',
-        'court_room_id'
+        'court_id'
     ];
 
     /**
