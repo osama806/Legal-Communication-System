@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('national_number')->unique();
             $table->enum('gender', ['male', 'female']);
             $table->string('phone')->unique();
+            $table->string('avatar');
             $table->timestamps();
         });
     }

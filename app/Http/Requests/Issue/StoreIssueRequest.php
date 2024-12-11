@@ -36,8 +36,8 @@ class StoreIssueRequest extends FormRequest
             "base_number" => "required|string|digits:8|unique:issues,base_number",
             "record_number" => "required|string|digits:8|unique:issues,record_number",
             "agency_id" => "required|numeric|min:1|exists:agencies,id",
-            "court_name" => "required|string|in:cassation,reconciliation,beginning,appeal,commercial,banking,arbitration,reconciliation_penalty,start_penalty,misdemeanor_appeal,felonies,islamic,christianity,administrative_disputes,international_disputes,military_judiciary,terrorism",
-            "type" => "required|string|in:legitimacy,civil,penal,administrative,commercial,terrorism,military,arbitration,international_disputes",
+            "court_id" => "required|numeric|min:1|exists:courts,id",
+            "court_room_id" => "required|numeric|min:1|exists:court_rooms,id",
             "start_date" => "required|date|date_format:Y-m-d",
             "estimated_cost" => "required|numeric|min:1",
         ];
@@ -54,8 +54,8 @@ class StoreIssueRequest extends FormRequest
             "base_number" => "Base number",
             "record_number" => "Record number",
             "agency_id" => "Agency number",
-            "court_name" => "Court name",
-            "type" => "Issue type",
+            "court_id" => "Court number",
+            "court_room_id" => "Court room number",
             "start_date" => "Issue start date",
             "estimated_cost" => "Estimated cost for issue",
         ];
@@ -74,7 +74,8 @@ class StoreIssueRequest extends FormRequest
             "date" => "The :attribute must be a valid date.",
             "date_format" => "The :attribute must be in the format Y-m-d.",
             "boolean" => "The :attribute field must be true or false.",
-            "in" => "The selected :attribute is invalid.",
+            'court_id.exists' => 'The specified :attribute does not exist in courts table.',
+            'court_room_id.exists' => 'The specified :attribute does not exist in court_rooms table.',
         ];
     }
 

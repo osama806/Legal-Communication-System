@@ -18,8 +18,8 @@ class Issue extends Model
         "record_number",
         "lawyer_id",
         "agency_id",
-        "court_name",
-        "type",
+        "court_id",
+        "court_room_id",
         "start_date",
         "end_date",
         "status",
@@ -74,6 +74,24 @@ class Issue extends Model
     }
 
     /**
+     * Defines a many-to-one relationship with the Court model.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function court(): BelongsTo
+    {
+        return $this->belongsTo(Court::class);
+    }
+
+    /**
+     * Defines a many-to-one relationship with the Court_room model.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function court_room(): BelongsTo
+    {
+        return $this->belongsTo(Court_room::class);
+    }
+
+    /**
      * Filter issue
      * @param mixed $query
      * @param mixed $filters
@@ -89,8 +107,8 @@ class Issue extends Model
             $query->where('record_number', $filters['record_number']);
         }
 
-        if (isset($filters['court_name'])) {
-            $query->where('court_name', $filters['court_name']);
+        if (isset($filters['court_room'])) {
+            $query->where('court_room', $filters['court_room']);
         }
 
         if (isset($filters['type'])) {

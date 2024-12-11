@@ -19,11 +19,14 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->text('address');
+            $table->foreignId('specialization_id')->constrained('specializations')->cascadeOnDelete();
             $table->string('union_branch');
             $table->string('union_number')->unique();
             $table->date('affiliation_date');
             $table->integer('years_of_experience');
             $table->string('phone')->unique();
+            $table->text('description');
+            $table->string('avatar');
             $table->timestamps();
         });
     }

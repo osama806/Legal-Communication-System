@@ -16,8 +16,8 @@ return new class extends Migration {
             $table->string('record_number')->unique();
             $table->foreignId('lawyer_id')->nullable()->constrained('lawyers')->cascadeOnDelete();
             $table->foreignId('agency_id')->constrained('agencies')->cascadeOnDelete();
-            $table->string('court_name');
-            $table->string('type');
+            $table->foreignId('court_id')->constrained('courts')->cascadeOnDelete();
+            $table->foreignId('court_room_id')->constrained('court_rooms')->cascadeOnDelete();
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->string('status')->default('قيد الدعوى');

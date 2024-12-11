@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('lawyers', function (Blueprint $table) {
-            $table->text('description')->nullable()->after('phone');
+        Schema::create('court_rooms', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('court_id')->constrained('courts')->cascadeOnDelete();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('lawyers', function (Blueprint $table) {
-            $table->dropColumn('description');
-        });
+        Schema::dropIfExists('court_rooms');
     }
 };

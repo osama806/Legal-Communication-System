@@ -21,6 +21,7 @@ return new class extends Migration
             $table->text('address');
             $table->string('union_branch');
             $table->string('union_number')->unique();
+            $table->string('avatar');
             $table->timestamps();
         });
     }

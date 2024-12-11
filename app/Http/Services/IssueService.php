@@ -56,7 +56,6 @@ class IssueService
                 'code' => 404
             ];
         }
-
         if (!$agency->is_active) {
             return [
                 'status' => false,
@@ -71,8 +70,8 @@ class IssueService
                 "record_number" => $data['record_number'],
                 "agency_id" => $agency->id,
                 'lawyer_id' => Auth::guard('lawyer')->id(),
-                "court_name" => $data['court_name'],
-                "type" => $data['type'],
+                "court_id" => $data['court_id'],
+                "court_room_id" => $data['court_room_id'],
                 "start_date" => $data['start_date'],
                 "estimated_cost" => $data['estimated_cost'],
             ]);

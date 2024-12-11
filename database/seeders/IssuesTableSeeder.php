@@ -30,8 +30,8 @@ class IssuesTableSeeder extends Seeder
                 'record_number' => $faker->unique()->numerify('########'), // رقم السجل فريد
                 'lawyer_id' => $faker->numberBetween(1, 200), // ID المحامي من 1 إلى 200
                 'agency_id' => $faker->numberBetween(1, 200),
-                'court_name' => $faker->randomElement(['جنايات', 'شرعية', 'جزاء', 'صلح']),
-                'type' => $faker->randomElement(['جنائية', 'مدنية', 'تجارية', 'عائلية']),
+                'court_id' => $faker->numberBetween(1, 200),
+                'court_room_id' => $faker->numberBetween(1, 200),
                 'start_date' => $startDate->format('Y-m-d'), // تحويل التاريخ إلى صيغة Y-m-d
                 'end_date' => $endDate ? $endDate->format('Y-m-d') : null, // تحويل التاريخ إذا لم يكن null
                 'status' => $status, // تعيين الحالة بناءً على تاريخ النهاية

@@ -18,14 +18,14 @@ class IssueResource extends JsonResource
             "id" => $this->id,
             "base_number" => $this->base_number,
             "record_number" => $this->record_number,
-            "agency_id" =>  $this->agency_id,
-            "court_name" => $this->court_name,
-            "type" => $this->type,
+            "agency_id" => $this->agency_id,
+            "court_id" => $this->court_id,
+            "court_room_id" => $this->court_room_id,
             "start_date" => $this->start_date,
             "end_date" => $this->end_date,
             "status" => $this->status,
             "estimated_cost" => $this->estimated_cost,
-            "issue activity" => $this->is_active === 1 ? 'active' : 'in-active',
+            "issue_activity" => $this->is_active === 1 ? 'active' : 'in-active',
         ];
     }
 }

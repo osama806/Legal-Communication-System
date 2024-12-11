@@ -36,7 +36,7 @@ class LawyersTableSeeder extends Seeder
                 'password' => Hash::make('123456789'), // يمكنك تعديل كلمة المرور الافتراضية هنا
                 'address' => $faker->address,
                 'specialization_id' => $faker->randomElement($specializationIds), // اختيار تخصص عشوائي
-                'union_branch' => $faker->randomElement(['Damascus', 'Aleppo', 'Homs', 'Latakia']),
+                'union_branch' => $faker->randomElement(['دمشق', 'حلب', 'حمص', 'اللاذقية', "درعا", "السويداء"]),
                 'union_number' => $faker->unique()->numberBetween(10000000, 99999999),
                 'affiliation_date' => $faker->date('Y-m-d', 'now'),
                 'years_of_experience' => $faker->numberBetween(1, 40),

@@ -28,8 +28,8 @@ class FilterRequest extends FormRequest
             "per_page" => "nullable|integer|min:1",
             'base_number' => 'nullable|string',
             'record_number' => 'nullable|string',
-            "court_name" => "nullable|string|in:cassation,reconciliation,beginning,appeal,commercial,banking,arbitration,reconciliation_penalty,start_penalty,misdemeanor_appeal,felonies,islamic,christianity,administrative_disputes,international_disputes,military_judiciary,terrorism",
-            "type" => "nullable|string|in:legitimacy,civil,penal,administrative,commercial,terrorism,military,arbitration,international_disputes",
+            "court_id" => "nullable|numeric|min:1|exists:courts,id",
+            "court_room_id" => "nullable|numeric|min:1|exists:court_rooms,id",
             'status' => 'nullable|string',
         ];
     }
@@ -45,8 +45,8 @@ class FilterRequest extends FormRequest
             'per_page' => 'Items per page',
             "base_number" => "Base number",
             "record_number" => "Record number",
-            "court_name" => "Court name",
-            "type" => "Issue type",
+            "court_id" => "Court number",
+            "court_room_id" => "Court room number",
             "status" => "Issue status",
         ];
     }
@@ -56,7 +56,8 @@ class FilterRequest extends FormRequest
         return [
             'integer' => 'The :attribute must be a valid integer.',
             "string" => "The :attribute must be a string.",
-            "in" => "The selected :attribute is invalid.",
+            'court_id.exists' => 'The specified :attribute does not exist in courts table.',
+            'court_room_id.exists' => 'The specified :attribute does not exist in court_rooms table.',
         ];
     }
 }

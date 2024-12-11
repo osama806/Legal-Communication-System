@@ -34,7 +34,7 @@ class StoreLawyerForAgencyRequest extends FormRequest
         return [
             'agency_id' => 'required|numeric|exists:agencies,id',
             'representative_id' => 'required|numeric|exists:representatives,id',
-            'type' => 'required|string|in:عامة,خاصة,شرعية',
+            'type' => 'required|string|in:public,private,legitimacy',
             'authorizations' => 'required|string|min:1',
             'exceptions' => 'required|string|min:1',
         ];
