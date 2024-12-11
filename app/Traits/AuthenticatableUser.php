@@ -53,7 +53,7 @@ trait AuthenticatableUser
      * @param string $roleName The name of the role to check.
      * @return bool True if the model's role matches the specified name, false otherwise.
      */
-    public function hasRole(string $roleName): bool
+    public function hasRole($roleName): bool
     {
         return $this->role && $this->role->name === $roleName;
     }

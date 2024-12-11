@@ -22,11 +22,7 @@ class AuthService
             'admin', 'employee', 'user' => 'api',
             'lawyer' => 'lawyer',
             'representative' => 'representative',
-            default => [
-                'status' => false,
-                'msg' => 'Email or password is incorrect!',
-                'code' => 401
-            ]
+            default => null
         };
 
         // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
@@ -53,7 +49,7 @@ class AuthService
             if ($authenticated->role->name !== $role) {
                 return [
                     'status' => false,
-                    'msg' => 'Does not have ' . $role . ' privileges!',
+                    'msg' => 'Does not have ' . $role . 'privileges!',
                     'code' => 403
                 ];
             }
@@ -117,19 +113,19 @@ class AuthService
      */
     private function checkRole($email)
     {
-        $user = User::where('email', $email)->first();
-        if ($user && !$user->hasRole('user')) {
-            return $user->role->name;
+        $person = User::where('email', $email)->first();
+        if ($person && !$person->hasRole('user')) {
+            return $person->role ? $person->role->name : null;
         }
 
         $lawyer = Lawyer::where('email', $email)->first();
         if ($lawyer) {
-            return $lawyer->role->name;
+            return $lawyer->role ? $lawyer->role->name : null;
         }
 
         $representative = Representative::where('email', $email)->first();
         if ($representative) {
-            return $representative->role->name;
+            return $representative->role ? $representative->role->name : null;
         }
         return null;
     }
