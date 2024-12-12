@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Issue\FilterForAdminAndEmployee;
-use App\Http\Requests\Issue\FilterForUserRequest;
 use App\Http\Requests\Issue\FilterRequest;
+use App\Http\Requests\Issue\ShowOneRequest;
 use App\Http\Requests\Issue\StoreIssueRequest;
 use App\Http\Requests\Issue\FinishIssueStatusRequest;
 use App\Http\Requests\Issue\UpdateStatusRequest;
@@ -26,7 +26,7 @@ class IssueController extends Controller
     }
 
     /**
-     * Display a listing of the issues related to lawyer.
+     * Display a listing of the issues related to user & lawyer.
      * @param \App\Http\Requests\Issue\FilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -52,20 +52,17 @@ class IssueController extends Controller
     }
 
     /**
-     * Display the specified issue by lawyer.
+     * Display the specified issue by user & lawyer.
+     * @param \App\Http\Requests\Issue\ShowOneRequest $request
      * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(ShowOneRequest $request, $id)
     {
-        $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
-            return Issue::where("id", $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
-        });
-        if (!$issue) {
-            return $this->error('Issue Not Found', 404);
-        }
-
-        return $this->success('issue', new IssueResource($issue), 200);
+        $response = $this->issueService->displayOne($request->validated(), $id);
+        return $response['status']
+            ? $this->success('issue', new IssueResource($response['issue']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -134,38 +131,6 @@ class IssueController extends Controller
         });
 
         return $this->success('issues', IssueResource::collection($issues), 200);
-    }
-
-    /**
-     * Display a listing of the issues related to user.
-     * @param \App\Http\Requests\Issue\FilterForUserRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function indexForUser(FilterForUserRequest $request)
-    {
-        $response = $this->issueService->getListForUser($request->validated());
-        return $response['status']
-            ? $this->success("data", $response['issues'], 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Display the specified issue related to user.
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function showForUser($id)
-    {
-        $issue = Cache::remember('issue_' . Auth::guard('api')->id(), 600, function () use ($id) {
-            return Issue::whereHas('agency', function ($query) {
-                return $query->where('user_id', Auth::guard('api')->id());
-            })->with('agency')->find($id);
-        });
-
-        if (!$issue) {
-            return $this->error('Issue Not Found', 404);
-        }
-        return $this->success('issue', new IssueResource($issue), 200);
     }
 
     /**

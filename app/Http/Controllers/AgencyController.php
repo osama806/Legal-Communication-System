@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Agency\FilterForLawyerRequest;
-use App\Http\Requests\Agency\FilterForRepresentativeRequest;
-use App\Http\Requests\Agency\FilterForUserRequest;
+use App\Http\Requests\Agency\FilterForAllRequest;
 use App\Http\Requests\Agency\FilterRequest;
+use App\Http\Requests\Agency\ShowOneRequest;
 use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
@@ -108,113 +107,29 @@ class AgencyController extends Controller
     }
 
     /**
-     * Get listing of the agencies related to user.
-     * @param \App\Http\Requests\Agency\FilterForUserRequest $request
+     * Get listing of the agencies related to user, lawyer & representative.
+     * @param \App\Http\Requests\Agency\FilterForAllRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexForUser(FilterForUserRequest $request)
+    public function getList(FilterForAllRequest $request)
     {
-        $response = $this->agencyService->getListForUser($request->validated());
+        $response = $this->agencyService->getListForAll($request->validated());
         return $response['status']
             ? $this->success('data', $response['agencies'], 200)
             : $this->error($response['msg'], $response['code']);
     }
 
     /**
-     * Display the specified agency related to user
+     * Display the specified agency related to user, lawyer & representative.
+     * @param \App\Http\Requests\Agency\ShowOneRequest $request
      * @param mixed $id
-     * @return array|mixed|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
-    public function showForUser($id)
+    public function showOne(ShowOneRequest $request, $id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
-            ];
-        }
-        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
-            return Agency::where('id', $id)->where('user_id', Auth::guard('api')->id())->first();
-        });
-
-        if (!$agency) {
-            return $this->error('Agency Not Found', 404);
-        }
-        return $this->success('agency', new AgencyResource($agency), 200);
-    }
-
-    /**
-     * Get listing of the agencies related to lawyer.
-     * @param \App\Http\Requests\Agency\FilterForLawyerRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function indexForLawyer(FilterForLawyerRequest $request)
-    {
-        $response = $this->agencyService->getListForLawyer($request->validated());
+        $response = $this->agencyService->dispayOne($request->validated(), $id);
         return $response['status']
-            ? $this->success('data', $response['agencies'], 200)
+            ? $this->success('agency', new AgencyResource($response['agency']), 200)
             : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Display the specified agency related to lawyer
-     * @param mixed $id
-     * @return array|mixed|\Illuminate\Http\JsonResponse
-     */
-    public function showForLawyer($id)
-    {
-        if (!Auth::guard('lawyer')->check()) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
-            ];
-        }
-        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
-            return Agency::where('id', $id)->where('lawyer_id', Auth::guard('lawyer')->id())->first();
-        });
-
-        if (!$agency) {
-            return $this->error('Agency Not Found', 404);
-        }
-        return $this->success('agency', new AgencyResource($agency), 200);
-    }
-
-    /**
-     * Get listing of the agencies related to representative.
-     * @param \App\Http\Requests\Agency\FilterForRepresentativeRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function indexForRepresentative(FilterForRepresentativeRequest $request)
-    {
-        $response = $this->agencyService->getListForRepresentative($request->validated());
-        return $response['status']
-            ? $this->success('data', $response['agencies'], 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Display the specified agency related to representative.
-     * @param mixed $id
-     * @return array|mixed|\Illuminate\Http\JsonResponse
-     */
-    public function showForRepresentative($id)
-    {
-        if (!Auth::guard('representative')->check()) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
-            ];
-        }
-        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
-            return Agency::where('id', $id)->where('representative_id', Auth::guard('representative')->id())->first();
-        });
-
-        if (!$agency) {
-            return $this->error('Agency Not Found', 404);
-        }
-        return $this->success('agency', new AgencyResource($agency), 200);
     }
 }

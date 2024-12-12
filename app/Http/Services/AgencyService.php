@@ -81,9 +81,6 @@ class AgencyService
                 DB::commit();
 
                 Cache::forget('agencies');
-                Cache::forget('agenciesForUser');
-                Cache::forget('agenciesForLawyer');
-                Cache::forget('agenciesForRepresentative');
                 return ['status' => true];
             } else {
                 return [
@@ -136,15 +133,38 @@ class AgencyService
     }
 
     /**
-     * Get listing of the agencies related to user.
+     * Get listing of the agencies related to user, lawyer & representative.
      * @param array $data
      * @return array
      */
-    public function getListForUser(array $data)
+    public function getListForAll(array $data)
     {
-        $agencies = Cache::remember('agenciesForUser', 1200, function () use ($data) {
-            return Agency::filter($data)->where('user_id', Auth::guard('api')->id())->paginate($data['per_page'] ?? 10);
-        });
+        $guard = $this->checkGuard($data['role']);
+        if (!$guard) {
+            return [
+                'status' => false,
+                'msg' => 'No authenticated person found for the provided role!',
+                'code' => 403
+            ];
+        }
+        if (Auth::guard($guard)->check()) {
+            if ($data['role'] !== Auth::guard($guard)->user()->role->name) {
+                return [
+                    'status' => false,
+                    'msg' => 'This action is unauthorized',
+                    'code' => 403
+                ];
+            }
+        } else {
+            return [
+                'status' => false,
+                'msg' => 'Role Unauthenticated',
+                'code' => 401
+            ];
+        }
+
+        $columnCondition = $guard === 'api' ? 'user_id' : $guard . '_id';
+        $agencies = Agency::filter($data)->where($columnCondition, Auth::guard($guard)->id())->paginate($data['per_page'] ?? 10);
 
         if ($agencies->isEmpty()) {
             return [
@@ -153,7 +173,6 @@ class AgencyService
                 'code' => 404
             ];
         }
-
         return [
             'status' => true,
             'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
@@ -161,52 +180,69 @@ class AgencyService
     }
 
     /**
-     * Get listing of the agencies related to lawyer.
+     * Display the specified agency related to user, lawyer & representative.
      * @param array $data
+     * @param mixed $id
      * @return array
      */
-    public function getListForLawyer(array $data)
+    public function dispayOne(array $data, $id)
     {
-        $agencies = Cache::remember('agenciesForLawyer', 1200, function () use ($data) {
-            return Agency::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
-        });
-
-        if ($agencies->isEmpty()) {
+        $guard = $this->checkGuard($data['role']);
+        if (!$guard) {
             return [
                 'status' => false,
-                'msg' => "Not Found Any Agency!",
-                'code' => 404
+                'msg' => 'No authenticated person found for the provided role!',
+                'code' => 403
+            ];
+        }
+        if (Auth::guard($guard)->check()) {
+            if ($data['role'] !== Auth::guard($guard)->user()->role->name) {
+                return [
+                    'status' => false,
+                    'msg' => 'This action is unauthorized',
+                    'code' => 403
+                ];
+            }
+        } else {
+            return [
+                'status' => false,
+                'msg' => 'Role Unauthenticated',
+                'code' => 401
             ];
         }
 
+        $columnCondition = $guard === 'api' ? 'user_id' : $guard . '_id';
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id, $columnCondition, $guard) {
+            return Agency::where('id', $id)->where($columnCondition, Auth::guard($guard)->id())->first();
+        });
+
+        if (!$agency) {
+            return [
+                'status' => false,
+                'msg' => 'Agency Not Found',
+                'code' => 404
+            ];
+        }
         return [
             'status' => true,
-            'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
+            'agency' => $agency
         ];
     }
 
     /**
-     * Get listing of the agencies related to representative.
-     * @param array $data
-     * @return array
+     * Check guard
+     * @param mixed $role
+     * @return string|null
      */
-    public function getListForRepresentative(array $data)
+    private function checkGuard($role): string|null
     {
-        $agencies = Cache::remember('agenciesForRepresentative', 1200, function () use ($data) {
-            return Agency::filter($data)->where('representative_id', Auth::guard('representative')->id())->paginate($data['per_page'] ?? 10);
-        });
+        $guard = match ($role) {
+            'user' => 'api',
+            'lawyer' => 'lawyer',
+            'representative' => 'representative',
+            default => null
+        };
 
-        if ($agencies->isEmpty()) {
-            return [
-                'status' => false,
-                'msg' => "Not Found Any Agency!",
-                'code' => 404
-            ];
-        }
-
-        return [
-            'status' => true,
-            'agencies' => $this->formatPagination($agencies, AgencyResource::class, 'agencies')
-        ];
+        return $guard;
     }
 }

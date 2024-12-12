@@ -42,7 +42,7 @@ class FilterRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->success('errors', $validator->errors(), 400));
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     public function attributes()
@@ -61,7 +61,6 @@ class FilterRequest extends FormRequest
         return [
             'integer' => 'The :attribute must be a valid integer.',
             'min' => 'The :attribute must be at least :min characters long.',
-            'in' => ':attribute must be either "approved" or "rejected"',
             'numeric' => 'The :attribute must be a numeric value.',
         ];
     }

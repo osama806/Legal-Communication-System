@@ -4,6 +4,8 @@ namespace App\Http\Requests\Issue;
 
 use App\Traits\ResponseTrait;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class FilterRequest extends FormRequest
@@ -14,7 +16,12 @@ class FilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return (Auth::guard("api")->check() && Auth::guard("api")->user()->hasRole('user')) || Auth::guard("lawyer")->check();
+    }
+
+    public function failedAuthorization()
+    {
+        throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
@@ -25,6 +32,7 @@ class FilterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'role' => 'required|string|min:4|in:user,lawyer',
             "per_page" => "nullable|integer|min:1",
             'base_number' => 'nullable|string',
             'record_number' => 'nullable|string',
@@ -36,12 +44,13 @@ class FilterRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->success('errors', $validator->errors(), 401));
+        throw new ValidationException($validator, $this->error($validator->errors(), 401));
     }
 
     public function attributes()
     {
         return [
+            'role' => 'Authenticated role',
             'per_page' => 'Items per page',
             "base_number" => "Base number",
             "record_number" => "Record number",

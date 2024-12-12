@@ -4,10 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\RegisterLawyerRequest;
 use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
-use App\Http\Requests\Lawyer\FilterForEmployeeRequest;
-use App\Http\Requests\Lawyer\FilterForUserRequest;
 use App\Http\Requests\Lawyer\IndexFilterRequest;
 use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
@@ -17,7 +14,6 @@ use App\Http\Services\LawyerService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LawyerController extends Controller
 {

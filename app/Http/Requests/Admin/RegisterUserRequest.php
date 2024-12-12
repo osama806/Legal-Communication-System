@@ -55,7 +55,7 @@ class RegisterUserRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->success('errors', $validator->errors(), 422));
+        throw new ValidationException($validator, $this->error($validator->errors(), 422));
     }
 
     /**

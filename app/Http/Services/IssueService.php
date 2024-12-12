@@ -21,9 +21,39 @@ class IssueService
      */
     public function getList(array $data)
     {
-        $issues = Cache::remember("issues", 1200, function () use ($data) {
-            return Issue::filter($data)->where('lawyer_id', Auth::guard('lawyer')->id())->paginate($data['per_page'] ?? 10);
-        });
+        $guard = $this->checkGuard($data['role']);
+        if (!$guard) {
+            return [
+                'status' => false,
+                'msg' => 'Role unauthorized',
+                'code' => 403
+            ];
+        }
+        if (Auth::guard($guard)->check()) {
+            if ($data['role'] !== Auth::guard($guard)->user()->role->name) {
+                return [
+                    'status' => false,
+                    'msg' => 'This action is unauthorized',
+                    'code' => 403
+                ];
+            }
+        } else {
+            return [
+                'status' => false,
+                'msg' => 'Role Unauthenticated',
+                'code' => 401
+            ];
+        }
+
+        $issues = $guard === 'lawyer'
+            ? Issue::filter($data)->where('lawyer_id', Auth::guard($guard)->id())->paginate($data['per_page'] ?? 10)
+            : Issue::whereHas('agency', function ($query) {
+                $query->where('user_id', Auth::guard('api')->id());
+            })
+                ->with('agency')
+                ->filter($data)
+                ->paginate($data['per_page'] ?? 10);
+
         if ($issues->isEmpty()) {
             return [
                 'status' => false,
@@ -35,6 +65,70 @@ class IssueService
         return [
             'status' => true,
             'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
+        ];
+    }
+
+    /**
+     * Display the specified issue by user & lawyer.
+     * @param array $data
+     * @param mixed $id
+     * @return array
+     */
+    public function displayOne(array $data, $id)
+    {
+        $guard = $this->checkGuard($data['role']);
+        if (!$guard) {
+            return [
+                'status' => false,
+                'msg' => 'No authenticated person found for the provided role!',
+                'code' => 403
+            ];
+        }
+        if (Auth::guard($guard)->check()) {
+            if ($data['role'] !== Auth::guard($guard)->user()->role->name) {
+                return [
+                    'status' => false,
+                    'msg' => 'This action is unauthorized',
+                    'code' => 403
+                ];
+            }
+        } else {
+            return [
+                'status' => false,
+                'msg' => 'Role Unauthenticated',
+                'code' => 401
+            ];
+        }
+
+        // تحديد طريقة الفحص بناءً على نوع الحارس
+        $issue = Cache::remember('issue_' . $id, 600, function () use ($id, $guard) {
+            if ($guard === 'api') {
+                // عندما يكون الحارس هو المستخدم، تحقق من العلاقة مع الوكالة
+                return Issue::where('id', $id)
+                    ->whereHas('agency', function ($query) {
+                        $query->where('user_id', Auth::guard('api')->id());
+                    })
+                    ->with('agency') // جلب بيانات الوكالة مع القضية
+                    ->first();
+            } else {
+                // عندما يكون الحارس هو المحامي
+                return Issue::where('id', $id)
+                    ->where('lawyer_id', Auth::guard($guard)->id())
+                    ->first();
+            }
+        });
+
+        if (!$issue) {
+            return [
+                'status' => false,
+                'msg' => 'Issue Not Found',
+                'code' => 404
+            ];
+        }
+
+        return [
+            'status' => true,
+            'issue' => $issue
         ];
     }
 
@@ -248,36 +342,6 @@ class IssueService
     }
 
     /**
-     * Get listing of the issues related to user.
-     * @param array $data
-     * @return array
-     */
-    public function getListForUser(array $data)
-    {
-        $issues = Cache::remember("issuesUser" . Auth::guard('api')->id(), 1200, function () use ($data) {
-            return Issue::whereHas('agency', function ($query) {
-                $query->where('user_id', Auth::guard('api')->id());
-            })
-                ->with('agency')
-                ->filter($data)
-                ->paginate($data['per_page'] ?? 10);
-        });
-
-        if ($issues->isEmpty()) {
-            return [
-                'status' => false,
-                'msg' => "Not Found Any Issue!",
-                'code' => 404
-            ];
-        }
-
-        return [
-            'status' => true,
-            'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
-        ];
-    }
-
-    /**
      * Get listing of the issues forward to admin and employee.
      * @param array $data
      * @return array
@@ -300,5 +364,21 @@ class IssueService
             'status' => true,
             'issues' => $this->formatPagination($issues, IssueResource::class, 'issues'),
         ];
+    }
+
+    /**
+     * Check guard
+     * @param mixed $role
+     * @return string|null
+     */
+    private function checkGuard($role): string|null
+    {
+        $guard = match ($role) {
+            'user' => 'api',
+            'lawyer' => 'lawyer',
+            default => null
+        };
+
+        return $guard;
     }
 }
