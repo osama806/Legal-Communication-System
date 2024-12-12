@@ -33,14 +33,13 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get message that errors explanation
+     * Get message that errors explanation.
      * @param \Illuminate\Contracts\Validation\Validator $validator
-     * @throws \Illuminate\Validation\ValidationException
-     * @return never
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->success("errors", $validator->errors(), 422));
+        return $this->error($validator->errors(), 400);
     }
 
     /**

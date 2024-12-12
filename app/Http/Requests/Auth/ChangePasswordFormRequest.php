@@ -5,9 +5,7 @@ namespace App\Http\Requests\Auth;
 use App\Traits\ResponseTrait;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class ChangePasswordFormRequest extends FormRequest
 {
@@ -22,7 +20,7 @@ class ChangePasswordFormRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**
@@ -39,14 +37,13 @@ class ChangePasswordFormRequest extends FormRequest
     }
 
     /**
-     * Get message that errors explanation
+     * Get message that errors explanation.
      * @param \Illuminate\Contracts\Validation\Validator $validator
-     * @throws \Illuminate\Validation\ValidationException
-     * @return never
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->success("errors", $validator->errors(), 422));
+        return $this->error($validator->errors(), 400);
     }
 
     /**

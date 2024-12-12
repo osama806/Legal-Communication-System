@@ -21,7 +21,7 @@ class StoreRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**

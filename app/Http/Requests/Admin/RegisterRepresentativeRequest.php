@@ -7,7 +7,6 @@ use Auth;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\ValidationException;
 
 class RegisterRepresentativeRequest extends FormRequest
 {
@@ -21,9 +20,13 @@ class RegisterRepresentativeRequest extends FormRequest
         return Auth::check() && Auth::user()->role->name === 'admin';
     }
 
+    /**
+     * Get message that errors explanation.
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized.', 422));
+        return $this->error('This action is unauthorized.', 422);
     }
 
     /**
@@ -46,12 +49,11 @@ class RegisterRepresentativeRequest extends FormRequest
     /**
      * Get message that errors explanation.
      * @param \Illuminate\Contracts\Validation\Validator $validator
-     * @throws \Illuminate\Validation\ValidationException
-     * @return never
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->error($validator->errors(), 422));
+        return $this->error($validator->errors(), 400);
     }
 
     /**

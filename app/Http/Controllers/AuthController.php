@@ -5,12 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\LogoutRequest;
 use App\Http\Services\AuthService;
-use App\Models\Lawyer;
-use App\Models\Representative;
-use App\Models\User;
 use App\Traits\ResponseTrait;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {

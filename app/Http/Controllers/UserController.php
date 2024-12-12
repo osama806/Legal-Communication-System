@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordFormRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateUserInfoRequest;
-use App\Http\Requests\User\FilterForEmployeeRequest;
 use App\Http\Requests\User\IndexFilterRequest;
 use App\Http\Requests\User\RegisterUserRequest;
 use App\Http\Resources\NotificationResource;
@@ -15,8 +14,8 @@ use App\Models\User;
 use App\Http\Services\UserService;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Traits\ResponseTrait;
-use Auth;
-use Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -67,7 +66,7 @@ class UserController extends Controller
     }
 
     /**
-     * Get list of users by admin
+     * Get list of users by admin & employee
      * @param \App\Http\Requests\User\IndexFilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -93,19 +92,16 @@ class UserController extends Controller
     }
 
     /**
-     * Get account info
+     * Get user info by admin & employee
+     * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function profile()
+    public function show($id)
     {
-        $user = Cache::remember('user_' . Auth::guard('api')->id(), 600, function () {
-            return User::find(Auth::guard('api')->id());
-        });
-        if ($user && !$user->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
-        }
-
-        return $this->success("profile", new UserResource($user), 200);
+        $response = $this->userService->fetchOne($id);
+        return $response['status']
+            ? $this->success('user', new UserResource($response['user']), 200)
+            : $this->error($response['msg'], $response['code']);
     }
 
     /**
@@ -134,6 +130,22 @@ class UserController extends Controller
     }
 
     /**
+     * Get account info
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function profile()
+    {
+        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
+            return $this->error('This action is unauthorized', 422);
+        }
+
+        $user = Cache::remember('user_' . Auth::guard('api')->id(), 600, function () {
+            return User::find(Auth::guard('api')->id());
+        });
+        return $this->success("profile", new UserResource($user), 200);
+    }
+
+    /**
      * Get list of notifications
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -153,19 +165,6 @@ class UserController extends Controller
         $response = $this->userService->signupUser($registerUserRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Get user info by admin
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function show($id)
-    {
-        $response = $this->userService->fetchOne($id);
-        return $response['status']
-            ? $this->success('user', new UserResource($response['user']), 200)
             : $this->error($response['msg'], $response['code']);
     }
 
@@ -207,32 +206,6 @@ class UserController extends Controller
         $response = $this->userService->deleteUser($user);
         return $response['status']
             ? $this->success('msg', 'Deleted Account Successfully', 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Get list of users by employee
-     * @param \App\Http\Requests\User\FilterForEmployeeRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getAll(FilterForEmployeeRequest $request)
-    {
-        $response = $this->userService->getList($request->validated());
-        return $response['status']
-            ? $this->success('users', $response['users'], 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Get one user by employee
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function showOne($id)
-    {
-        $response = $this->userService->fetchOneForEmployee($id);
-        return $response['status']
-            ? $this->success('user', new UserResource($response['user']), 200)
             : $this->error($response['msg'], $response['code']);
     }
 }

@@ -8,12 +8,10 @@ use App\Http\Requests\Agency\ShowOneRequest;
 use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
-use App\Models\Lawyer;
 use App\Http\Services\AgencyService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
-use Illuminate\Http\Request;
 
 class AgencyController extends Controller
 {

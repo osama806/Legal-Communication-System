@@ -21,7 +21,7 @@ class StoreRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**
@@ -33,7 +33,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'name' => 'required|string|min:3|max:50',
-            'court_id'  =>  'required|numeric|min:1|exists:courts,id'
+            'court_id' => 'required|numeric|min:1|exists:courts,id'
         ];
     }
 
@@ -46,7 +46,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'name' => 'Court room name',
-            'court_id'  =>  'Court number'
+            'court_id' => 'Court number'
         ];
     }
 

@@ -6,7 +6,6 @@ use App\Http\Requests\Admin\RegisterEmployeeRequest;
 use App\Http\Requests\Employee\IndexFilterRequest;
 use Auth;
 use App\Models\User;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Services\EmployeeService;
 use App\Traits\ResponseTrait;

@@ -17,12 +17,12 @@ class IndexFilterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
+        return Auth::guard('api')->check() && !Auth::guard('api')->user()->hasRole('user');
     }
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**
@@ -42,7 +42,7 @@ class IndexFilterRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->error($validator->errors(), 400));
+        return $this->error($validator->errors(), 400);
     }
 
     public function attributes()

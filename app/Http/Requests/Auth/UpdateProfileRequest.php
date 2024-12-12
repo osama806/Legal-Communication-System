@@ -23,7 +23,7 @@ class UpdateProfileRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**
@@ -46,12 +46,11 @@ class UpdateProfileRequest extends FormRequest
     /**
      * Get message that errors explanation.
      * @param \Illuminate\Contracts\Validation\Validator $validator
-     * @throws \Illuminate\Validation\ValidationException
-     * @return never
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function failedValidation(Validator $validator)
     {
-        throw new ValidationException($validator, $this->success("errors", $validator->errors(), 422));
+        return $this->error($validator->errors(), 400);
     }
 
     /**

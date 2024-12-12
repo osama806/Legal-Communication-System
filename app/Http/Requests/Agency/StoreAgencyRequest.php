@@ -22,7 +22,7 @@ class StoreAgencyRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This is unauthorized', 422));
+        return $this->error('This is unauthorized', 422);
     }
 
     /**
@@ -40,7 +40,7 @@ class StoreAgencyRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new ValidationException($validator, $this->error($validator->errors(), 401));
+        return $this->error($validator->errors(), 400);
     }
 
     public function attributes()

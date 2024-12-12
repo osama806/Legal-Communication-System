@@ -21,7 +21,7 @@ class UpdateRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        throw new HttpResponseException($this->error('This action is unauthorized', 422));
+        return $this->error('This action is unauthorized', 422);
     }
 
     /**
@@ -33,7 +33,7 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name' => 'nullable|string|min:3|max:50',
-            'court_id'  =>  'nullable|numeric|min:1|exists:courts,id'
+            'court_id' => 'nullable|numeric|min:1|exists:courts,id'
         ];
     }
 
@@ -46,7 +46,7 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name' => 'Court room name',
-            'court_id'  =>  'Court number'
+            'court_id' => 'Court number'
         ];
     }
 

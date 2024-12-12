@@ -4,10 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\RegisterRepresentativeRequest;
 use App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
-use App\Http\Requests\Representative\FilterForEmployeeRequest;
-use App\Http\Requests\Representative\FilterForLawyerRequest;
 use App\Http\Requests\Representative\IndexFilterRequest;
 use App\Http\Resources\NotificationResource;
 use App\Http\Resources\RepresentativeResource;
@@ -17,7 +14,6 @@ use App\Http\Services\RepresentativeService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RepresentativeController extends Controller
 {
@@ -29,7 +25,7 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get list of representatives by admin
+     * Get list of representatives by admin, employee & lawyer.
      * @param \App\Http\Requests\Representative\IndexFilterRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -55,66 +51,24 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get account info
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function profile()
-    {
-        $representative = Cache::remember('representative_' . Auth::guard('representative')->id(), 600, function () {
-            return Representative::find(Auth::guard('representative')->id());
-        });
-
-        if ($representative && $representative->role->name !== 'representative') {
-            return $this->error('This action is unauthorized', 422);
-        }
-        return $this->success("profile", new RepresentativeResource($representative), 200);
-    }
-
-    /**
-     * Acceptance agency coming from lawyer & send notifications to user and lawyer both
-     * @param \App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function agencyAcceptance(StoreRepresentativeForAgencyRequest $request)
-    {
-        $response = $this->representativeService->sendResponse($request->validated());
-        $agency = Cache::remember('agency_' . $request['agency_id'], 600, function () use ($request) {
-            return Agency::find($request['agency_id']);
-        });
-
-        return $response['status']
-            ? $this->success('msg', 'Agency Status is ' . $agency->status, 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Get list of notifications
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getNotifications()
-    {
-        $representative = Auth::guard('representative')->user();
-        return $this->success('notifications', NotificationResource::collection($representative->notifications), 200);
-    }
-
-    /**
-     * Get representative info by admin
+     * Get representative info by admin, employee & lawyer.
      * @param mixed $id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        if ((Auth::guard('api')->check() && (Auth::guard('api')->user()->hasRole('admin') || Auth::guard('api')->user()->hasRole('employee'))) || Auth::guard('lawyer')->check()) {
+            $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
+                return Representative::find($id);
+            });
+
+            if (!$representative) {
+                return $this->error("Representative Not Found", 404);
+            }
+            return $this->success("representative", new RepresentativeResource($representative), 200);
+        } else {
             return $this->error('This action is unauthorized', 422);
         }
-        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
-            return Representative::find($id);
-        });
-
-        if (!$representative) {
-            return $this->error("Representative Not Found", 404);
-        }
-        return $this->success("representative", new RepresentativeResource($representative), 200);
     }
 
     /**
@@ -159,66 +113,45 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Get list of representatives by lawyer
-     * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
+     * Get account info
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function indexForLawyer(FilterForLawyerRequest $request)
+    public function profile()
     {
-        $response = $this->representativeService->getList($request->validated());
+        $representative = Cache::remember('representative_' . Auth::guard('representative')->id(), 600, function () {
+            return Representative::find(Auth::guard('representative')->id());
+        });
+
+        if ($representative && $representative->role->name !== 'representative') {
+            return $this->error('This action is unauthorized', 422);
+        }
+        return $this->success("profile", new RepresentativeResource($representative), 200);
+    }
+
+    /**
+     * Acceptance agency coming from lawyer & send notifications to user and lawyer both
+     * @param \App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function agencyAcceptance(StoreRepresentativeForAgencyRequest $request)
+    {
+        $response = $this->representativeService->sendResponse($request->validated());
+        $agency = Cache::remember('agency_' . $request['agency_id'], 600, function () use ($request) {
+            return Agency::find($request['agency_id']);
+        });
+
         return $response['status']
-            ? $this->success('data', $response['representatives'], 200)
+            ? $this->success('msg', 'Agency Status is ' . $agency->status, 200)
             : $this->error($response['msg'], $response['code']);
     }
 
     /**
-     * Get representative info by lawyer
-     * @param mixed $id
+     * Get list of notifications
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showForLawyer($id)
+    public function getNotifications()
     {
-        if (!Auth::guard('lawyer')->check()) {
-            return $this->error('This action is unauthorized', 422);
-        }
-        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
-            return Representative::find($id);
-        });
-        if (!$representative) {
-            return $this->error("Representative Not Found", 404);
-        }
-        return $this->success("representative", new RepresentativeResource($representative), 200);
-    }
-
-    /**
-     * Get list of representatives by employee
-     * @param \App\Http\Requests\Representative\FilterForLawyerRequest $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getAll(FilterForEmployeeRequest $request)
-    {
-        $response = $this->representativeService->getList($request->validated());
-        return $response['status']
-            ? $this->success('data', $response['representatives'], 200)
-            : $this->error($response['msg'], $response['code']);
-    }
-
-    /**
-     * Get representative info by employee
-     * @param mixed $id
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function showOne($id)
-    {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return $this->error('This action is unauthorized', 422);
-        }
-        $representative = Cache::remember('representative_' . $id, 600, function () use ($id) {
-            return Representative::find($id);
-        });
-        if (!$representative) {
-            return $this->error("Representative Not Found", 404);
-        }
-        return $this->success("representative", new RepresentativeResource($representative), 200);
+        $representative = Auth::guard('representative')->user();
+        return $this->success('notifications', NotificationResource::collection($representative->notifications), 200);
     }
 }

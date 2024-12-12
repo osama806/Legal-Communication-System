@@ -34,7 +34,6 @@ class UserService
     public function register(array $data)
     {
         try {
-            // تحميل الصورة باستخدام الخدمة
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
@@ -43,7 +42,6 @@ class UserService
             $data['avatar'] = $avatarResponse['url'];
             $user = User::create($data);
 
-            // تعيين الدور
             if (method_exists($user, 'role')) {
                 $user->role()->create([
                     'name' => 'user'
@@ -54,7 +52,6 @@ class UserService
 
             // Mail::to($user->email)->send(new VerifyCodeMail($user));
 
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');
@@ -371,13 +368,13 @@ class UserService
     }
 
     /**
-     * Get one user by admin
+     * Get one user by admin & employee
      * @param string $id
      * @return array
      */
     public function fetchOne(string $id)
     {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
+        if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized',
@@ -403,36 +400,4 @@ class UserService
         ];
     }
 
-    /**
-     * Get one user by employee
-     * @param string $id
-     * @return array
-     */
-    public function fetchOneForEmployee(string $id)
-    {
-        if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return [
-                'status' => false,
-                'msg' => 'This action is unauthorized',
-                'code' => 422
-            ];
-        }
-        $user = Cache::remember('user_' . $id, 600, function () use ($id) {
-            return User::where('id', $id)->whereHas('role', function ($query) {
-                $query->where('name', 'user');
-            })->first();
-        });
-
-        if (!$user) {
-            return [
-                'status' => false,
-                'msg' => 'User Not Found',
-                'code' => 404
-            ];
-        }
-        return [
-            'status' => true,
-            'user' => $user
-        ];
-    }
 }
