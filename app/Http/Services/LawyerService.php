@@ -128,9 +128,10 @@ class LawyerService
             DB::beginTransaction();
             $agency->representative_id = $data['representative_id'];
             $agency->type = $data['type'];
-            $agency->authorizations = $data['authorizations'];
             $agency->exceptions = $data['exceptions'];
             $agency->save();
+
+            $agency->authorizations()->attach($data['authorization_Ids']);
             Notification::send($representative, new LawyerToRepresentativeNotification($agency));
             DB::commit();
 
@@ -193,7 +194,7 @@ class LawyerService
      */
     public function destroy(Lawyer $lawyer)
     {
-        if (!Auth::user()->hasRole('employee')) {
+        if (!Auth::guard('api')->user()->hasRole('employee')) {
             return [
                 'status' => false,
                 'msg' => 'This action is unauthorized.',

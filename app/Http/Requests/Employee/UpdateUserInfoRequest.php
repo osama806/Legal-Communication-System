@@ -18,8 +18,7 @@ class UpdateUserInfoRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $user = Auth::user();
-        return Auth::check() && $user->hasRole('employee');
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('employee');
     }
 
     public function failedAuthorization()

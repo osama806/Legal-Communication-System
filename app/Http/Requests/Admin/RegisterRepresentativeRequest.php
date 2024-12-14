@@ -17,7 +17,7 @@ class RegisterRepresentativeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->role->name === 'admin';
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
     }
 
     /**

@@ -16,8 +16,7 @@ class StoreAgencyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $user = Auth::user();
-        return Auth::check() && $user->hasRole("user");
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole("user");
     }
 
     public function failedAuthorization()

@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Employee;
+namespace App\Http\Requests\Authorization;
 
 use App\Traits\ResponseTrait;
-use Auth;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
-class UpdateEmployeeInfoRequest extends FormRequest
+class UpdateAuthorizationRequest extends FormRequest
 {
     use ResponseTrait;
 
@@ -23,23 +22,18 @@ class UpdateEmployeeInfoRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        return $this->error('This action is unauthorized', 422);
+        throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
      * Get the validation rules that apply to the request.
-     * @return string[]
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'name' => 'nullable|string|min:3|max:50',
-            'address' => 'nullable|string|min:3|max:100',
-            'birthdate' => 'nullable|date|date_format:Y-m-d',
-            'birth_place' => 'nullable|string|min:3|max:100',
-            'national_number' => 'nullable|digits:11|unique:users,national_number',
-            'phone' => 'nullable|digits:10|unique:users,phone',
-            'avatar' => 'nullable|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
+            'name' => 'nullable|string|min:3|max:50|unique:authorizations,name',
         ];
     }
 
@@ -60,13 +54,7 @@ class UpdateEmployeeInfoRequest extends FormRequest
     public function attributes()
     {
         return [
-            'name' => 'Full name',
-            'address' => 'Address',
-            'birthdate' => 'Birth date',
-            'birth_place' => 'Birth place',
-            'national_number' => 'National number',
-            'phone' => 'Phone number',
-            'avatar' => 'Avatar'
+            'name' => 'Authorization name',
         ];
     }
 
@@ -79,8 +67,7 @@ class UpdateEmployeeInfoRequest extends FormRequest
         return [
             'unique' => 'This :attribute is already registered.',
             'min' => ':attribute must be at least :min characters long.',
-            'in' => ':attribute must be either "male" or "female"',
-            'date' => 'The :attribute must be a valid date format.',
+            'max' => ':attribute must be at maximum :max characters.',
         ];
     }
 }

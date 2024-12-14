@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AuthorizationController;
 use App\Http\Controllers\CourtController;
 use App\Http\Controllers\CourtRoomController;
 use App\Http\Controllers\EmployeeController;
@@ -44,6 +45,7 @@ Route::prefix("v1")->group(function () {
             Route::apiResource('get-agencies', AgencyController::class)->only(['index', 'show']);
             Route::apiResource('get-rates', RateController::class)->only(['index', 'show']);
             Route::apiResource('get-specializations', SpecializationController::class)->except(['update', 'destroy']);
+            Route::apiResource('get-authorizations', AuthorizationController::class)->except(['update', 'destroy']);
         });
     });
 
@@ -62,6 +64,7 @@ Route::prefix("v1")->group(function () {
             Route::apiResource('courts', CourtController::class);
             Route::apiResource('court-rooms', CourtRoomController::class);
             Route::apiResource('fetch-specializations', SpecializationController::class)->except('store');
+            Route::apiResource('fetch-authorizations', AuthorizationController::class)->except('store');
             Route::get("get-issues", [IssueController::class, "getAll"]);
             Route::get("get-issues/{id}", [IssueController::class, "showOne"]);
             Route::apiResource('fetch-rates', RateController::class)->except(['store', 'update']);
@@ -114,6 +117,7 @@ Route::prefix("v1")->group(function () {
             Route::apiResource("fetch-court-rooms", CourtRoomController::class)->only(["index", "show"]);
             Route::apiResource('get-issues', IssueController::class)->except(['update']);
             Route::apiResource('fetch-representatives', RepresentativeController::class)->only(['index', 'show']);
+            Route::apiResource('all-authorizations', AuthorizationController::class)->only(['index', 'show']);
             Route::get('get-agencies', [AgencyController::class, 'getList']);
             Route::get('get-agencies/{id}', [AgencyController::class, 'showOne']);
         });

@@ -6,6 +6,7 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Agency extends Model
@@ -22,8 +23,6 @@ class Agency extends Model
         "type",
         "cause",
         "status",
-        "authorizations",
-        "exceptions",
     ];
 
     /**
@@ -60,6 +59,17 @@ class Agency extends Model
     public function issue(): HasMany
     {
         return $this->hasMany(Issue::class);
+    }
+
+    /**
+     * Defines a many-to-many relationship with the Authorization model.
+     * This relationship uses a pivot table named 'agency_authorizations'
+     * with 'authorization_id' and 'agency_id' as the foreign keys.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function authorizations(): BelongsToMany
+    {
+        return $this->belongsToMany(Authorization::class, "agency_authorizations", "agency_id", "authorization_id");
     }
 
     /**

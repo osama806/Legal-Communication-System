@@ -4,9 +4,7 @@ namespace App\Http\Requests\Agency;
 
 use App\Traits\ResponseTrait;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class StoreLawyerForAgencyRequest extends FormRequest
 {
@@ -35,7 +33,8 @@ class StoreLawyerForAgencyRequest extends FormRequest
             'agency_id' => 'required|numeric|exists:agencies,id',
             'representative_id' => 'required|numeric|exists:representatives,id',
             'type' => 'required|string|in:public,private,legitimacy',
-            'authorizations' => 'required|string|min:1',
+            'authorization_Ids' => 'required|array',
+            'authorization_Ids.*' => 'numeric|exists:authorizations,id',
             'exceptions' => 'required|string|min:1',
         ];
     }
@@ -51,7 +50,7 @@ class StoreLawyerForAgencyRequest extends FormRequest
             'representative_id' => 'Representative number',
             'agency_id' => 'Agency number',
             'type' => 'Agency type',
-            'authorizations' => 'Authorizations',
+            'authorization_Ids' => 'Authorization IDs',
             'exceptions' => 'Exceptions',
         ];
     }
@@ -59,13 +58,13 @@ class StoreLawyerForAgencyRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'The :attribute is required.',
-            'numeric' => 'The :attribute must be a numeric value.',
-            'agency_id.exists' => 'The specified :attribute does not exist in the agencies table.',
-            'representative_id.exists' => 'The specified :attribute does not exist in the representatives table.',
-            'min' => 'The :attribute must be at least :min characters long.',
+            'required' => 'The :attribute field is required and cannot be left blank.',
+            'numeric' => 'The :attribute must be a valid numeric value.',
+            'agency_id.exists' => 'The selected :attribute does not match any record in the agencies table.',
+            'representative_id.exists' => 'The selected :attribute does not match any record in the representatives table.',
+            'min' => 'The :attribute must contain at least :min characters.',
             'max' => 'The :attribute must not exceed :max characters.',
-            "in" => "The selected :attribute is invalid.",
+            'in' => 'The :attribute must be one of the allowed values: public, private, or legitimacy.',
         ];
     }
 }

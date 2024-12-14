@@ -16,7 +16,7 @@ class UpdateSpecializationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->hasRole('employee');
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('employee');
     }
 
     public function failedAuthorization()
