@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Http\Services\UserService;
 use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Traits\ResponseTrait;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 

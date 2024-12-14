@@ -14,6 +14,7 @@ use App\Http\Services\RepresentativeService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class RepresentativeController extends Controller
 {

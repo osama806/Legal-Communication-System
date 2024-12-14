@@ -10,6 +10,7 @@ use App\Http\Resources\UserResource;
 use App\Http\Services\EmployeeService;
 use App\Traits\ResponseTrait;
 use Cache;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class EmployeeController extends Controller
 {

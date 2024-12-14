@@ -13,6 +13,7 @@ use App\Models\Issue;
 use App\Http\Services\IssueService;
 use App\Traits\ResponseTrait;
 use Cache;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
 class IssueController extends Controller

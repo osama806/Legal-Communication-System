@@ -10,6 +10,7 @@ use App\Http\Services\SpecializationService;
 use App\Traits\ResponseTrait;
 use Auth;
 use Cache;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SpecializationController extends Controller
 {

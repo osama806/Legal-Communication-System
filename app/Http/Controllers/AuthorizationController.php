@@ -8,6 +8,7 @@ use App\Http\Resources\AuthorizationResource;
 use App\Http\Services\AuthorizationService;
 use App\Models\Authorization;
 use App\Traits\ResponseTrait;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
