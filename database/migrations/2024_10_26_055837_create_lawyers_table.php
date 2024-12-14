@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->text('address');
-            $table->foreignId('specialization_id')->constrained('specializations')->cascadeOnDelete();
             $table->string('union_branch');
             $table->string('union_number')->unique();
             $table->date('affiliation_date');

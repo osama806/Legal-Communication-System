@@ -27,7 +27,7 @@ class LawyerResource extends JsonResource
             "union_branch" => $this->union_branch,
             "union_number" => $this->union_number,
             "affiliation_date" => $this->affiliation_date,
-            "specializations" => $this->specializations->pluck('name'), // Extracts the names of specializations
+            "specializations" => $this->specializations->pluck('name'),
             "years_of_experience" => $this->years_of_experience,
             "description" => $this->description,
             "phone" => $this->phone,

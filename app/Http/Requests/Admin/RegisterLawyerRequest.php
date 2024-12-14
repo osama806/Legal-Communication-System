@@ -17,7 +17,7 @@ class RegisterLawyerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()->role->name === 'admin';
+        return Auth::guard('api')->check() && Auth::guard('api')->user()->hasRole('admin');
     }
 
     /**
@@ -45,7 +45,8 @@ class RegisterLawyerRequest extends FormRequest
             'union_number' => 'required|unique:lawyers,union_number|digits:8',
             'years_of_experience' => 'required|integer|min:1',
             'phone' => 'required|digits:10|unique:lawyers,phone',
-            'specialization_id' => 'required|numeric|exists:specializations,id',
+            'specialization_Ids' => 'required|array',
+            'specialization_Ids.*' => 'numeric|exists:specializations,id',
             'description' => 'required|string|min:50',
             'avatar' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp|max:5120'
         ];
@@ -78,7 +79,7 @@ class RegisterLawyerRequest extends FormRequest
             'years_of_experience' => 'Years of experience',
             'phone' => 'Phone number',
             'description' => 'Description',
-            'specialization_id' => 'Specialization number',
+            'specialization_Ids' => 'Specialization IDs',
             'avatar' => 'Avatar'
         ];
     }

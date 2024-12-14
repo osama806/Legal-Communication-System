@@ -61,21 +61,16 @@ class LawyerService
     public function signupLawyer(array $data)
     {
         try {
-            // تحميل الصورة باستخدام الخدمة
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
-            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
             $plainPassword = $data['password'];
-
-            // تشفير كلمة المرور قبل إنشاء المستخدم
             $data['password'] = Hash::make($plainPassword);
             $data['avatar'] = $avatarResponse['url'];
 
-            // إنشاء المستخدم
             $lawyer = Lawyer::create($data);
+            $lawyer->specializations()->attach($data['specialization_Ids']);
 
-            // تعيين الدور
             if (method_exists($lawyer, 'role')) {
                 $lawyer->role()->create([
                     'name' => 'lawyer'
@@ -84,20 +79,15 @@ class LawyerService
                 throw new Exception("Role relationship not defined in Lawyer model.");
             }
 
-            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
             // Mail::to($lawyer->email)->send(new VerifyCodeMail($lawyer));
 
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('lawyer')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');
             }
 
-            // توليد Refresh Token
             $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($lawyer);
             DB::commit();
-
-            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('lawyers');
             return [
                 'status' => true,

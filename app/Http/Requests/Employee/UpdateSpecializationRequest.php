@@ -6,8 +6,6 @@ use App\Traits\ResponseTrait;
 use Auth;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\ValidationException;
 
 class UpdateSpecializationRequest extends FormRequest
 {
@@ -34,7 +32,7 @@ class UpdateSpecializationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'nullable|string|min:3|max:20|unique:specializations,name',
+            'name' => 'nullable|string|min:3|max:50|unique:specializations,name',
         ];
     }
 
