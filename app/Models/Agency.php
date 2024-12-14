@@ -72,6 +72,17 @@ class Agency extends Model
         return $this->belongsToMany(Authorization::class, "agency_authorizations", "agency_id", "authorization_id");
     }
 
+     /**
+     * Defines a many-to-many relationship with the Exception model.
+     * This relationship uses a pivot table named 'agency_exceptions'
+     * with 'exception_id' and 'agency_id' as the foreign keys.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function exceptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Exception::class, "agency_exceptions", "agency_id", "exception_id");
+    }
+
     /**
      * Filter agency
      * @param mixed $query
