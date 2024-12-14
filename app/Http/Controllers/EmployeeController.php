@@ -57,7 +57,7 @@ class EmployeeController extends Controller
             return User::find(Auth::guard('api')->id());
         });
         if ($employee && !$employee->hasRole('employee')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         return $this->success("profile", new UserResource($employee), 200);
@@ -71,7 +71,7 @@ class EmployeeController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('admin')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $response = $this->employeeService->fetchOne($id);

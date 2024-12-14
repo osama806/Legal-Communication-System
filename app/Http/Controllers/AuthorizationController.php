@@ -27,7 +27,7 @@ class AuthorizationController extends Controller
     public function index()
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         $authorizations = Cache::remember('authorizations', 1200, function () {
             return Authorization::all();
@@ -57,7 +57,7 @@ class AuthorizationController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $authorization = Cache::remember('authorization_' . $id, 600, function () use ($id) {
@@ -101,7 +101,7 @@ class AuthorizationController extends Controller
     public function destroy($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $authorization = Cache::remember('authorization_' . $id, 600, function () use ($id) {

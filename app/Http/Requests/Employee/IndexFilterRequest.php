@@ -5,6 +5,8 @@ namespace App\Http\Requests\Employee;
 use App\Traits\ResponseTrait;
 use Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\ValidationException;
 
 class IndexFilterRequest extends FormRequest
 {
@@ -20,7 +22,7 @@ class IndexFilterRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        return $this->error('This action is unauthorized', 422);
+        throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
@@ -40,7 +42,7 @@ class IndexFilterRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        return $this->error($validator->errors(), 400);
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     public function attributes()

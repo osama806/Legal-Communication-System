@@ -39,7 +39,7 @@ class LoginRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        return $this->error($validator->errors(), 400);
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     /**

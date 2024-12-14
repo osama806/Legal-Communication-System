@@ -5,7 +5,9 @@ namespace App\Http\Requests\Authorization;
 use App\Traits\ResponseTrait;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class StoreAuthorizationRequest extends FormRequest
 {
@@ -21,7 +23,7 @@ class StoreAuthorizationRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        return $this->error('This action is unauthorized', 422);
+        throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
@@ -43,7 +45,7 @@ class StoreAuthorizationRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        return $this->error($validator->errors(), 400);
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     /**

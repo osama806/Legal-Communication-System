@@ -67,7 +67,7 @@ class RepresentativeController extends Controller
             }
             return $this->success("representative", new RepresentativeResource($representative), 200);
         } else {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
     }
 
@@ -123,7 +123,7 @@ class RepresentativeController extends Controller
         });
 
         if ($representative && $representative->role->name !== 'representative') {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         return $this->success("profile", new RepresentativeResource($representative), 200);
     }

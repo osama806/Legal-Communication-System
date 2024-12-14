@@ -7,6 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class UpdateAuthorizationRequest extends FormRequest
 {
@@ -44,7 +45,7 @@ class UpdateAuthorizationRequest extends FormRequest
      */
     public function failedValidation(Validator $validator)
     {
-        return $this->error($validator->errors(), 400);
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     /**

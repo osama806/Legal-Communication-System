@@ -154,7 +154,7 @@ class IssueController extends Controller
     public function showOne($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         $issue = Cache::remember('issue_' . $id, 600, function () use ($id) {
             return Issue::find($id);

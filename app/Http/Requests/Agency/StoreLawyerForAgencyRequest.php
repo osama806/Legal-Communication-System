@@ -4,7 +4,9 @@ namespace App\Http\Requests\Agency;
 
 use App\Traits\ResponseTrait;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class StoreLawyerForAgencyRequest extends FormRequest
 {
@@ -19,7 +21,7 @@ class StoreLawyerForAgencyRequest extends FormRequest
 
     public function failedAuthorization()
     {
-        return $this->error('This action is unauthorized', 422);
+        throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
@@ -41,7 +43,7 @@ class StoreLawyerForAgencyRequest extends FormRequest
 
     public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        return $this->error($validator->errors(), 400);
+        throw new ValidationException($validator, $this->error($validator->errors(), 400));
     }
 
     public function attributes()

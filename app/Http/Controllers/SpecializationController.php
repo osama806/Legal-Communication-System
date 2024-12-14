@@ -27,7 +27,7 @@ class SpecializationController extends Controller
     public function index()
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         $specializations = Cache::remember('specializations', 1200, function () {
             return Specialization::all();
@@ -57,7 +57,7 @@ class SpecializationController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $specialization = Cache::remember('specialization_' . $id, 600, function () use ($id) {
@@ -101,7 +101,7 @@ class SpecializationController extends Controller
     public function destroy($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('employee')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $specialization = Cache::remember('specialization_' . $id, 600, function () use ($id) {

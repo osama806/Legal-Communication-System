@@ -59,7 +59,7 @@ class LawyerController extends Controller
     public function show($id)
     {
         if (!Auth::guard('api')->check() || !Auth::guard('lawyer')->check() || !Auth::guard('representative')->check()) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         $lawyer = Cache::remember('lawyer_' . $id, 600, function () use ($id) {
             return Lawyer::find($id);
@@ -135,7 +135,7 @@ class LawyerController extends Controller
         });
 
         if ($lawyer && $lawyer->role->name !== 'lawyer') {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
         return $this->success("profile", new LawyerResource($lawyer), 200);
     }

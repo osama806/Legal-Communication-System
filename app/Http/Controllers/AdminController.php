@@ -44,7 +44,7 @@ class AdminController extends Controller
         });
 
         if ($admin && !$admin->hasRole('admin')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         return $this->success("profile", new UserResource($admin), 200);

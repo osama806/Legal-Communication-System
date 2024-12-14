@@ -49,7 +49,7 @@ class UserController extends Controller
             Auth::guard('api')->logout();
             return $this->logoutResponse('user');
         } else
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
     }
 
     /**
@@ -136,7 +136,7 @@ class UserController extends Controller
     public function profile()
     {
         if (!Auth::guard('api')->check() || !Auth::guard('api')->user()->hasRole('user')) {
-            return $this->error('This action is unauthorized', 422);
+            throw new HttpResponseException($this->error('This action is unauthorized', 422));
         }
 
         $user = Cache::remember('user_' . Auth::guard('api')->id(), 600, function () {
