@@ -23,8 +23,9 @@ class AgencyResource extends JsonResource
             "place_of_issue" => $this->place_of_issue,
             "type" => $this->type,
             "status" => $this->status,
-            "authorizations" => $this->authorizations,
-            "exceptions" => $this->exceptions,
+            "authorizations" => AuthorizationResource::collection($this->authorizations),
+            "exceptions" => ExceptionResource::collection($this->exceptions),
+            "is_active" =>  $this->is_active ? 'Yes' : 'No'
         ];
     }
 }

@@ -25,7 +25,7 @@ class IssueResource extends JsonResource
             "end_date" => $this->end_date,
             "status" => $this->status,
             "estimated_cost" => $this->estimated_cost,
-            "issue_activity" => $this->is_active === 1 ? 'active' : 'in-active',
+            "is_active" => $this->is_active ? 'Yes' : 'No',
         ];
     }
 }

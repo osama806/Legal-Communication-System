@@ -69,7 +69,10 @@ class LawyerService
             $data['avatar'] = $avatarResponse['url'];
 
             $lawyer = Lawyer::create($data);
-            $lawyer->specializations()->attach($data['specialization_Ids']);
+            $lawyer->specializations()->attach($data['specialization_Ids'], [
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
 
             if (method_exists($lawyer, 'role')) {
                 $lawyer->role()->create([
@@ -116,7 +119,7 @@ class LawyerService
             return Representative::find($data['representative_id']);
         });
 
-        if ($agency->representative_id !== null || $agency->type !== null || $agency->authorizations !== null || $agency->exceptions !== null) {
+        if ($agency->representative_id !== null || $agency->type !== null) {
             return [
                 'status' => false,
                 'msg' => 'You Send Notification Already!',
@@ -128,13 +131,18 @@ class LawyerService
             DB::beginTransaction();
             $agency->representative_id = $data['representative_id'];
             $agency->type = $data['type'];
-            $agency->exceptions = $data['exceptions'];
+            $agency->authorizations()->attach($data['authorization_Ids'], [
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            $agency->exceptions()->attach($data['exception_Ids'], [
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
             $agency->save();
 
-            $agency->authorizations()->attach($data['authorization_Ids']);
             Notification::send($representative, new LawyerToRepresentativeNotification($agency));
             DB::commit();
-
             Cache::forget('agency_' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
