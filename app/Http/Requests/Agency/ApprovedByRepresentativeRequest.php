@@ -8,9 +8,10 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-class StoreRepresentativeForAgencyRequest extends FormRequest
+class ApprovedByRepresentativeRequest extends FormRequest
 {
     use ResponseTrait;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -32,11 +33,9 @@ class StoreRepresentativeForAgencyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'agency_id' => 'required|numeric|min:1|exists:agencies,id',
             'sequential_number' => 'required|string|digits:8|unique:agencies,sequential_number',
             'record_number' => 'required|string|digits:8|unique:agencies,record_number',
             'place_of_issue' => 'required|string|min:2|max:100',
-            'status' => 'required|string|in:approved,rejected',
         ];
     }
 
@@ -48,11 +47,9 @@ class StoreRepresentativeForAgencyRequest extends FormRequest
     public function attributes()
     {
         return [
-            'agency_id' => 'Agency number',
             'sequential_number' => 'Sequential number',
             'record_number' => 'Record number',
             'place_of_issue' => 'Place of issue',
-            'status' => 'Agency status',
         ];
     }
 
@@ -60,7 +57,6 @@ class StoreRepresentativeForAgencyRequest extends FormRequest
     {
         return [
             'required' => 'The :attribute is required.',
-            'agency_id.exists' => 'The specified :attribute does not exist in the agencies table.',
             'unique' => 'This :attribute is already exists',
             'min' => 'The :attribute must be at least :min characters long.',
             'max' => 'The :attribute must not exceed :max characters.',

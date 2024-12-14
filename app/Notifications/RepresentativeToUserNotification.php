@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class RepresentativeToAllNotification extends Notification
+class RepresentativeToUserNotification extends Notification
 {
     use Queueable;
     protected $agency;
@@ -35,7 +35,7 @@ class RepresentativeToAllNotification extends Notification
         return [
             'agency_number' => $this->agency->id,
             'from' => 'Representative ' . $this->agency->representative->name,
-            'to' => 'User ' . $this->agency->user->name . " & Lawyer " . $this->agency->lawyer->name,
+            'to' => 'User ' . $this->agency->user->name,
             'message' => "Agency status is " . $this->agency->status,
         ];
     }

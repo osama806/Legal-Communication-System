@@ -3,9 +3,11 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\RepresentativeResource;
+use App\Notifications\RepresentativeToLawyerNotification;
 use App\Traits\PaginateResourceTrait;
 use Cache;
 use Hash;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Log;
 use Auth;
@@ -15,7 +17,7 @@ use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Models\Representative;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\RepresentativeToAllNotification;
+use App\Notifications\RepresentativeToUserNotification;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -52,60 +54,6 @@ class RepresentativeService
             'status' => true,
             'representatives' => $this->formatPagination($representatives, RepresentativeResource::class, 'representatives')
         ];
-    }
-
-    /**
-     * Reply notification response to user and lawyer
-     * @param array $data
-     * @return array
-     */
-    public function sendResponse(array $data)
-    {
-        $agency = Cache::remember('agency_' . $data['agency_id'], 600, function () use ($data) {
-            return Agency::find($data['agency_id']);
-        });
-
-        $user = Cache::remember('user_' . $agency->user_id, 600, function () use ($agency) {
-            return User::find($agency->user_id);
-        });
-
-        $lawyer = Cache::remember('lawyer_' . $agency->lawyer_id, 600, function () use ($agency) {
-            return Lawyer::find($agency->lawyer_id);
-        });
-
-        if ($agency->sequential_number !== null || $agency->record_number !== null || $agency->place_of_issue !== null || $agency->status !== "pending") {
-            return [
-                'status' => false,
-                'msg' => 'You Send Notification Already!',
-                'code' => 403
-            ];
-        }
-
-        try {
-            DB::beginTransaction();
-            $agency->sequential_number = $data['sequential_number'];
-            $agency->record_number = $data['record_number'];
-            $agency->place_of_issue = $data['place_of_issue'];
-            $agency->status = $data['status'];
-
-            if ($data['status'] === 'approved') {
-                $agency->is_active = true;
-            }
-
-            $agency->save();
-            Notification::send([$user, $lawyer], new RepresentativeToAllNotification($agency));
-            DB::commit();
-
-            Cache::forget('agency_' . $agency->id);
-            return ['status' => true];
-        } catch (Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'msg' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
     }
 
     /**
@@ -240,6 +188,147 @@ class RepresentativeService
         } catch (Exception $e) {
             Log::error('Error deleting account: ' . $e->getMessage());
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+        }
+    }
+
+    /**
+     * Agency approved & send notifications to user and lawyer both
+     * @param array $data
+     * @return array
+     */
+    public function approve(array $data, $id)
+    {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
+            return Agency::find($id);
+        });
+        if (!$agency || $agency->representative_id !== Auth::guard('representative')->id()) {
+            return [
+                'status' => false,
+                'msg' => 'Agency Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $user = Cache::remember('user_' . $agency->user_id, 600, function () use ($agency) {
+            return User::find($agency->user_id);
+        });
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $lawyer = Cache::remember('lawyer_' . $agency->lawyer_id, 600, function () use ($agency) {
+            return Lawyer::find($agency->lawyer_id);
+        });
+        if (!$lawyer) {
+            return [
+                'status' => false,
+                'msg' => 'Lawyer Not Found!',
+                'code' => 404
+            ];
+        }
+
+        if ($agency->sequential_number !== null || $agency->record_number !== null || $agency->place_of_issue !== null || $agency->status !== "pending") {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+        try {
+            DB::beginTransaction();
+            $agency->sequential_number = $data['sequential_number'];
+            $agency->record_number = $data['record_number'];
+            $agency->place_of_issue = $data['place_of_issue'];
+            $agency->status = 'approved';
+            $agency->is_active = true;
+
+            $agency->save();
+            Notification::send($user, new RepresentativeToUserNotification($agency));
+            Notification::send($lawyer, new RepresentativeToLawyerNotification($agency));
+            DB::commit();
+
+            Cache::forget('agency_' . $agency->id);
+            return ['status' => true];
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+    }
+
+    /**
+     * Agency rejected & send notifications to user and lawyer both
+     * @param mixed $id
+     * @return array
+     */
+    public function reject($id)
+    {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
+            return Agency::find($id);
+        });
+        if (!$agency || $agency->representative_id !== Auth::guard('representative')->id()) {
+            return [
+                'status' => false,
+                'msg' => 'Agency Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $user = Cache::remember('user_' . $agency->user_id, 600, function () use ($agency) {
+            return User::find($agency->user_id);
+        });
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $lawyer = Cache::remember('lawyer_' . $agency->lawyer_id, 600, function () use ($agency) {
+            return Lawyer::find($agency->lawyer_id);
+        });
+        if (!$lawyer) {
+            return [
+                'status' => false,
+                'msg' => 'Lawyer Not Found!',
+                'code' => 404
+            ];
+        }
+
+        if ($agency->sequential_number !== null || $agency->record_number !== null || $agency->place_of_issue !== null || $agency->status !== "pending") {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+        try {
+            DB::beginTransaction();
+            $agency->status = 'rejected';
+            $agency->is_active = false;
+            $agency->save();
+
+            Notification::send($user, new RepresentativeToUserNotification($agency));
+            Notification::send($lawyer, new RepresentativeToLawyerNotification($agency));
+            DB::commit();
+
+            Cache::forget('agency_' . $agency->id);
+            return ['status' => true];
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500,
+            ];
         }
     }
 }

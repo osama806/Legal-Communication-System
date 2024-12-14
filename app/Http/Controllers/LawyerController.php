@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\RegisterLawyerRequest;
-use App\Http\Requests\Agency\StoreLawyerForAgencyRequest;
+use App\Http\Requests\Agency\ApprovedByLawyerRequest;
 use App\Http\Requests\Employee\UpdateLawyerInfoRequest;
 use App\Http\Requests\Lawyer\IndexFilterRequest;
 use App\Http\Resources\LawyerResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Lawyer;
-use App\Models\Representative;
 use App\Http\Services\LawyerService;
 use App\Traits\ResponseTrait;
-use Auth;
-use Cache;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class LawyerController extends Controller
 {
@@ -143,18 +142,27 @@ class LawyerController extends Controller
 
     /**
      * Agency request is accepted & send notification to representative
-     * @param \App\Http\Requests\Agency\StoreLawyerForAgencyRequest $request
+     * @param \App\Http\Requests\Agency\ApprovedByLawyerRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function agencyAccepted(StoreLawyerForAgencyRequest $request)
+    public function agencyApproved(ApprovedByLawyerRequest $request, $id)
     {
-        $representative = Cache::remember("representative_" . Auth::guard("representative")->id(), 600, function () use ($request) {
-            return Representative::find($request['representative_id']);
-        });
-
-        $response = $this->lawyerService->send($request->validated());
+        $response = $this->lawyerService->approve($request->validated(), $id);
         return $response['status']
-            ? $this->success('msg', 'Send request to representative ' . $representative->name, 200)
+            ? $this->success('msg', 'Agency Approved By Lawyer Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
+    }
+
+    /**
+     * Agency request is rejected & send notification to user
+     * @param mixed $id
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function agencyRejected($id)
+    {
+        $response = $this->lawyerService->reject($id);
+        return $response['status']
+            ? $this->success('msg', 'Agency Rejected By Lawyer Successfully', 200)
             : $this->error($response['msg'], $response['code']);
     }
 

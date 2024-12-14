@@ -3,6 +3,8 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\LawyerResource;
+use App\Models\User;
+use App\Notifications\LawyerToUserNotification;
 use App\Traits\PaginateResourceTrait;
 use Auth;
 use Cache;
@@ -105,57 +107,6 @@ class LawyerService
     }
 
     /**
-     * Update agency record and send notification to representative
-     * @param array $data
-     * @return array
-     */
-    public function send(array $data)
-    {
-        $agency = Cache::remember('agency_' . $data['agency_id'], 600, function () use ($data) {
-            return Agency::find($data['agency_id']);
-        });
-
-        $representative = Cache::remember('representative_' . $data['representative_id'], 600, function () use ($data) {
-            return Representative::find($data['representative_id']);
-        });
-
-        if ($agency->representative_id !== null || $agency->type !== null) {
-            return [
-                'status' => false,
-                'msg' => 'You Send Notification Already!',
-                'code' => 403
-            ];
-        }
-
-        try {
-            DB::beginTransaction();
-            $agency->representative_id = $data['representative_id'];
-            $agency->type = $data['type'];
-            $agency->authorizations()->attach($data['authorization_Ids'], [
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-            $agency->exceptions()->attach($data['exception_Ids'], [
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-            $agency->save();
-
-            Notification::send($representative, new LawyerToRepresentativeNotification($agency));
-            DB::commit();
-            Cache::forget('agency_' . $agency->id);
-            return ['status' => true];
-        } catch (Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'msg' => $e->getMessage(),
-                'code' => 500,
-            ];
-        }
-    }
-
-    /**
      * Update lawyer info by employee
      * @param array $data
      * @param \App\Models\Lawyer $lawyer
@@ -229,6 +180,134 @@ class LawyerService
         } catch (Exception $e) {
             Log::error('Error deleting account: ' . $e->getMessage());
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
+        }
+    }
+
+    /**
+     * Agency request is accepted & send notification to representative
+     * @param array $data
+     * @return array
+     */
+    public function approve(array $data, $id)
+    {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
+            return Agency::find($id);
+        });
+        if (!$agency || $agency->lawyer_id !== Auth::guard('lawyer')->id()) {
+            return [
+                'status' => false,
+                'msg' => 'Agency Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $representative = Cache::remember('representative_' . $data['representative_id'], 600, function () use ($data) {
+            return Representative::find($data['representative_id']);
+        });
+
+        if ($agency->status !== 'pending') {
+            return [
+                'status' => false,
+                'msg' => 'Agency Status Not Pending!',
+                'code' => 400
+            ];
+        }
+        if ($agency->representative_id !== null || $agency->type !== null) {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+
+        try {
+            DB::beginTransaction();
+            $agency->representative_id = $representative->id;
+            $agency->type = $data['type'];
+            $agency->authorizations()->attach($data['authorization_Ids'], [
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            $agency->exceptions()->attach($data['exception_Ids'], [
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            $agency->save();
+
+            Notification::send($representative, new LawyerToRepresentativeNotification($agency));
+            DB::commit();
+            Cache::forget('agency_' . $agency->id);
+            return ['status' => true];
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500,
+            ];
+        }
+    }
+
+    /**
+     * Agency request is rejected & send notification to user
+     * @param mixed $id
+     * @return array
+     */
+    public function reject($id)
+    {
+        $agency = Cache::remember('agency_' . $id, 600, function () use ($id) {
+            return Agency::find($id);
+        });
+        if (!$agency || $agency->lawyer_id !== Auth::guard('lawyer')->id()) {
+            return [
+                'status' => false,
+                'msg' => 'Agency Not Found!',
+                'code' => 404
+            ];
+        }
+
+        $user = Cache::remember('user_' . $agency->user_id, 600, function () use ($agency) {
+            return User::find($agency->user_id);
+        });
+        if (!$user) {
+            return [
+                'status' => false,
+                'msg' => 'User Not Found!',
+                'code' => 404
+            ];
+        }
+
+        if ($agency->status !== 'pending') {
+            return [
+                'status' => false,
+                'msg' => 'Agency Status Not Pending!',
+                'code' => 400
+            ];
+        }
+        if ($agency->representative_id !== null || $agency->type !== null) {
+            return [
+                'status' => false,
+                'msg' => 'You Send Notification Already!',
+                'code' => 403
+            ];
+        }
+
+        try {
+            DB::beginTransaction();
+            $agency->status = 'rejected';
+            $agency->save();
+
+            Notification::send($user, new LawyerToUserNotification($agency));
+            DB::commit();
+            Cache::forget('agency_' . $agency->id);
+            return ['status' => true];
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'status' => false,
+                'msg' => $e->getMessage(),
+                'code' => 500,
+            ];
         }
     }
 }

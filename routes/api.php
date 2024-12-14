@@ -88,7 +88,7 @@ Route::prefix("v1")->group(function () {
             Route::get('notifications', 'getNotifications');
         });
         Route::controller(AgencyController::class)->group(function () {
-            Route::post('send-notify-to-lawyer', 'store');
+            Route::post('send-agency-notice', 'store');
             Route::put('get-agencies/{id}/isolate', 'destroy');
             Route::get('get-agencies', 'getList');
             Route::get('get-agencies/{id}', 'showOne');
@@ -96,8 +96,8 @@ Route::prefix("v1")->group(function () {
 
         Route::apiResource('/', UserController::class)->only(['destroy', 'update']);
         Route::apiResource('all-rates', RateController::class)->except(['index', 'show']);
-        Route::get('get-lawyers', [LawyerController::class, 'indexForUser']);
-        Route::get('get-lawyers/{id}', [LawyerController::class, 'showForUser']);
+        Route::get('get-lawyers', [LawyerController::class, 'index']);
+        Route::get('get-lawyers/{id}', [LawyerController::class, 'show']);
         Route::get('get-issues', [IssueController::class, 'index']);
         Route::get('get-issues/{id}', [IssueController::class, 'show']);
     });
@@ -107,7 +107,8 @@ Route::prefix("v1")->group(function () {
             Route::controller(LawyerController::class)->group(function () {
                 Route::get('profile', 'profile');
                 Route::get('notifications', 'getNotifications');
-                Route::post('send-notify-to-representative', 'agencyAccepted');
+                Route::post('get-agencies/{id}/approved', 'agencyApproved');
+                Route::post('get-agencies/{id}/rejected', 'agencyRejected');
             });
 
             Route::controller(IssueController::class)->group(function () {
@@ -131,12 +132,15 @@ Route::prefix("v1")->group(function () {
         Route::controller(RepresentativeController::class)->group(function () {
             Route::get('profile', 'profile');
             Route::get('notifications', 'getNotifications');
-            Route::post('send-notify-to-all', 'agencyAcceptance');
+            Route::post('get-agencies/{id}/approved', 'agencyApprove');
+            Route::post('get-agencies/{id}/rejected', 'agencyReject');
         });
+
         Route::controller(AgencyController::class)->group(function () {
             Route::get('get-agencies', 'getList');
             Route::get('get-agencies/{id}', 'showOne');
         });
+
         Route::apiResource('all-lawyers', LawyerController::class)->only(['index', 'show']);
         Route::apiResource("all-courts", CourtController::class)->only(["index", "show"]);
         Route::apiResource("all-court-rooms", CourtRoomController::class)->only(["index", "show"]);

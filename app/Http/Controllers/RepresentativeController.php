@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\RegisterRepresentativeRequest;
-use App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest;
+use App\Http\Requests\Agency\ApprovedByRepresentativeRequest;
 use App\Http\Requests\Employee\UpdateRepresentativeInfoRequest;
 use App\Http\Requests\Representative\IndexFilterRequest;
 use App\Http\Resources\NotificationResource;
@@ -130,19 +130,28 @@ class RepresentativeController extends Controller
     }
 
     /**
-     * Acceptance agency coming from lawyer & send notifications to user and lawyer both
-     * @param \App\Http\Requests\Agency\StoreRepresentativeForAgencyRequest $request
+     * Agency approved & send notifications to user and lawyer both
+     * @param \App\Http\Requests\Agency\ApprovedByRepresentativeRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function agencyAcceptance(StoreRepresentativeForAgencyRequest $request)
+    public function agencyApprove(ApprovedByRepresentativeRequest $request, $id)
     {
-        $response = $this->representativeService->sendResponse($request->validated());
-        $agency = Cache::remember('agency_' . $request['agency_id'], 600, function () use ($request) {
-            return Agency::find($request['agency_id']);
-        });
-
+        $response = $this->representativeService->approve($request->validated(), $id);
         return $response['status']
-            ? $this->success('msg', 'Agency Status is ' . $agency->status, 200)
+            ? $this->success('msg', 'Agency Status Is Approved Successfully', 200)
+            : $this->error($response['msg'], $response['code']);
+    }
+
+    /**
+     * Agency rejected & send notifications to user and lawyer both
+     * @param mixed $id
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function agencyReject($id)
+    {
+        $response = $this->representativeService->reject($id);
+        return $response['status']
+            ? $this->success('msg', 'Agency Status Is Rejected Successfully', 200)
             : $this->error($response['msg'], $response['code']);
     }
 

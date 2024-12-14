@@ -7,11 +7,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class LawyerToRepresentativeNotification extends Notification
+class RepresentativeToLawyerNotification extends Notification
 {
     use Queueable;
-
     protected $agency;
+
     /**
      * Create a new notification instance.
      */
@@ -25,7 +25,7 @@ class LawyerToRepresentativeNotification extends Notification
      *
      * @return array<int, string>
      */
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return ['database'];
     }
@@ -34,9 +34,9 @@ class LawyerToRepresentativeNotification extends Notification
     {
         return [
             'agency_number' => $this->agency->id,
-            'from' => 'Lawyer ' . $this->agency->lawyer->name,
-            'to' => 'Representative ' . $this->agency->representative->name,
-            'message' => "You have new agency request.",
+            'from' => 'Representative ' . $this->agency->representative->name,
+            'to' => 'Lawyer ' . $this->agency->lawyer->name,
+            'message' => "Agency status is " . $this->agency->status,
         ];
     }
 

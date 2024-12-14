@@ -8,7 +8,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-class StoreLawyerForAgencyRequest extends FormRequest
+class ApprovedByLawyerRequest extends FormRequest
 {
     use ResponseTrait;
 
@@ -42,7 +42,6 @@ class StoreLawyerForAgencyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'agency_id' => 'required|numeric|exists:agencies,id',
             'representative_id' => 'required|numeric|exists:representatives,id',
             'type' => 'required|string|in:public,private,legitimacy',
             'authorization_Ids' => [
@@ -78,7 +77,6 @@ class StoreLawyerForAgencyRequest extends FormRequest
     {
         return [
             'representative_id' => 'Representative number',
-            'agency_id' => 'Agency number',
             'type' => 'Agency type',
             'authorization_Ids' => 'Authorization IDs',
             'exception_Ids' => 'Exception IDs',
@@ -90,7 +88,6 @@ class StoreLawyerForAgencyRequest extends FormRequest
         return [
             'required' => 'The :attribute field is required and cannot be left blank.',
             'numeric' => 'The :attribute must be a valid numeric value.',
-            'agency_id.exists' => 'The selected :attribute does not match any record in the agencies table.',
             'representative_id.exists' => 'The selected :attribute does not match any record in the representatives table.',
             'distinct' => 'The :attribute must be unique.',
             'authorization_Ids.distinct' => 'Authorization IDs must not contain duplicates.',
