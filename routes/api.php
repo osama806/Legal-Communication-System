@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorizationController;
+use App\Http\Controllers\CodeGenerateController;
 use App\Http\Controllers\CourtController;
 use App\Http\Controllers\CourtRoomController;
 use App\Http\Controllers\EmployeeController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\UserController;
+use App\Models\CodeGenerate;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
@@ -24,10 +26,17 @@ Route::prefix("v1")->group(function () {
         Route::get("rates", [RateController::class, "ratesAI"]);
     });
 
-    // Auth admin, employee, lawyer & representative
     Route::prefix('auth')->group(function () {
+        Route::post('code/generate', [CodeGenerateController::class, 'store']);
+        Route::post('code/verify', [CodeGenerateController::class, 'verifyCode']);
         Route::post('signin', [AuthController::class, 'login']);
         Route::post('signout', [AuthController::class, 'logout'])->middleware(['auth:api,lawyer,representative']);
+
+        Route::prefix('user')->controller(UserController::class)->group(function () {
+            Route::post("signup", "store");
+            Route::post('signin', 'login');
+            Route::post('signout', 'logout')->middleware(['auth:api', 'refresh.token', 'security']);
+        });
     });
 
     Route::prefix("admin")->group(function () {
@@ -72,13 +81,6 @@ Route::prefix("v1")->group(function () {
             Route::get("get-issues/{id}", [IssueController::class, "showOne"]);
             Route::apiResource('fetch-rates', RateController::class)->except(['store', 'update']);
         });
-    });
-
-    // Auth user
-    Route::controller(UserController::class)->group(function () {
-        Route::post("auth/user/signup", "store");
-        Route::post('auth/user/signin', 'login');
-        Route::post('auth/user/signout', 'logout')->middleware(['auth:api', 'refresh.token', 'security']);
     });
 
     Route::prefix("users")->middleware(['auth:api', 'refresh.token', 'security'])->group(function () {

@@ -50,8 +50,6 @@ class UserService
                 throw new Exception("Role relationship not defined in User model.");
             }
 
-            // Mail::to($user->email)->send(new VerifyCodeMail($user));
-
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');

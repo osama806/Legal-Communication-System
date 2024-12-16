@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -41,6 +42,11 @@ class Representative extends Authenticatable implements JWTSubject
     public function agencies(): HasMany
     {
         return $this->hasMany(Agency::class);
+    }
+
+    public function code(): BelongsTo
+    {
+        return $this->belongsTo(CodeGenerate::class);
     }
 
     /**

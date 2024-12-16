@@ -9,8 +9,10 @@
 </head>
 
 <body>
-    <h1>Welcome {{ $user->name }}</h1>
-    <p>This is first mail to test</p>
+    <h1>Dear {{ $email }},</h1>
+    <p>Using this code to confirm your email</p>
+    <h3 style="text-align: center">{{ $code }}</h3>
+    <span>Don't share this code with anyone</span>
 </body>
 
 </html>

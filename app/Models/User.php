@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Traits\AuthenticatableUser;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -41,6 +42,11 @@ class User extends Authenticatable implements JWTSubject
         static::deleted(function ($user) {
             $user->role()->delete();
         });
+    }
+
+    public function code(): BelongsTo
+    {
+        return $this->belongsTo(CodeGenerate::class);
     }
 
     /**

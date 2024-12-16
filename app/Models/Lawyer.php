@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\AuthenticatableUser;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -43,6 +44,11 @@ class Lawyer extends Authenticatable implements JWTSubject
     public function issue_notes(): HasMany
     {
         return $this->hasMany(Issue_note::class);
+    }
+
+    public function code(): BelongsTo
+    {
+        return $this->belongsTo(CodeGenerate::class);
     }
 
     /**
