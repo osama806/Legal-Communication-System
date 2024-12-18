@@ -15,7 +15,6 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\UserController;
-use App\Models\CodeGenerate;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix("v1")->group(function () {
@@ -40,7 +39,7 @@ Route::prefix("v1")->group(function () {
     });
 
     Route::prefix("admin")->group(function () {
-        Route::post("auth/signup", [AdminController::class, "signup"]);
+        Route::post("auth/signup", [AdminController::class, "store"]);
         Route::middleware(['auth:api', 'refresh.token', 'security'])->group(function () {
             Route::get('profile', [AdminController::class, 'profile']);
             Route::post("signup-user", [UserController::class, "registerUser"]);
@@ -87,6 +86,8 @@ Route::prefix("v1")->group(function () {
         Route::controller(UserController::class)->group(function () {
             Route::get('profile', 'profile');
             Route::post('change-password', 'changePassword');
+            Route::put('update-info', 'update');
+            Route::delete('delete-account', 'destroy');
             Route::get('notifications', 'getNotifications');
         });
         Route::controller(AgencyController::class)->group(function () {
@@ -96,7 +97,6 @@ Route::prefix("v1")->group(function () {
             Route::get('get-agencies/{id}', 'showOne');
         });
 
-        Route::apiResource('/', UserController::class)->only(['destroy', 'update']);
         Route::apiResource('all-rates', RateController::class)->except(['index', 'show']);
         Route::get('get-lawyers', [LawyerController::class, 'index']);
         Route::get('get-lawyers/{id}', [LawyerController::class, 'show']);

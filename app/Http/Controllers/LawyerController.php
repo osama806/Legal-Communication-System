@@ -45,7 +45,7 @@ class LawyerController extends Controller
      */
     public function store(RegisterLawyerRequest $request)
     {
-        $response = $this->lawyerService->signupLawyer($request->validated());
+        $response = $this->lawyerService->register($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'lawyer')
             : $this->error($response['msg'], $response['code']);

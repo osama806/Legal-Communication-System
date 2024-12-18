@@ -3,8 +3,10 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\UserResource;
+use App\Models\CodeGenerate;
 use App\Traits\PaginateResourceTrait;
 use Cache;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use App\Models\User;
@@ -34,6 +36,23 @@ class UserService
     public function register(array $data)
     {
         try {
+            $code = CodeGenerate::where('email', $data['email'])->first();
+            if (!$code) {
+                return [
+                    'status' => false,
+                    'msg' => 'No verification code found for this email!',
+                    'code' => 404
+                ];
+            }
+            $date = Carbon::parse($code->expiration_date);
+            if ($date->isFuture() || !$code->is_verify) {
+                return [
+                    'status' => false,
+                    'msg' => 'This Email Not Verify!',
+                    'code' => 403
+                ];
+            }
+
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
@@ -137,7 +156,7 @@ class UserService
             }
             $user->update($filteredData);
 
-            if ($data['avatar']) {
+            if (isset($data['avatar'])) {
                 $avatarResponse = $this->assetService->storeImage($data['avatar']);
                 $user->avatar = $avatarResponse['url'];
                 $user->save();
@@ -150,7 +169,7 @@ class UserService
 
             return [
                 'status' => false,
-                'msg' => 'Failed to update profile. Please try again.',
+                'msg' => $e->getMessage(),
                 'code' => 500
             ];
         }
@@ -186,9 +205,13 @@ class UserService
     {
         $user = Auth::user();
         try {
-            // Check if the token is valid
             if (JWTAuth::parseToken()->check()) {
                 JWTAuth::invalidate(JWTAuth::getToken());
+            }
+
+            $code = CodeGenerate::where('email', $user->email)->first();
+            if ($code->exists()) {
+                $code->delete();
             }
             $user->delete();
             Cache::forget('users');
@@ -203,58 +226,6 @@ class UserService
         } catch (Exception $e) {
             Log::error('Error deleting account: ' . $e->getMessage());
             return ['status' => false, 'msg' => $e->getMessage(), 'code' => 500];
-        }
-    }
-
-    /**
-     * register user
-     * @param array $data
-     * @return array
-     */
-    public function signupUser(array $data)
-    {
-        try {
-            $avatarResponse = $this->assetService->storeImage($data['avatar']);
-            DB::beginTransaction();
-
-            $plainPassword = $data['password'];
-            $data['password'] = Hash::make($plainPassword);
-            $data['avatar'] = $avatarResponse['url'];
-            $user = User::create($data);
-
-            // تعيين الدور
-            if (method_exists($user, 'role')) {
-                $user->role()->create([
-                    'name' => 'user'
-                ]);
-            } else {
-                throw new Exception("Role relationship not defined in User model.");
-            }
-
-            // Mail::to($user->email)->send(new VerifyCodeMail($user));
-
-            $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
-            if (!$access_token = Auth::guard('api')->attempt($credentials)) {
-                throw new Exception('Failed to generate token');
-            }
-
-            $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
-            DB::commit();
-
-            Cache::forget('users');
-            return [
-                'status' => true,
-                'access_token' => $access_token,
-                'refresh_token' => $refresh_token
-            ];
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return [
-                'status' => false,
-                'msg' => $e->getMessage(),
-                'code' => 500
-            ];
         }
     }
 
@@ -289,7 +260,7 @@ class UserService
 
             $user->update($filteredData);
 
-            if ($data['avatar']) {
+            if (isset($data['avatar'])) {
                 $avatarResponse = $this->assetService->storeImage($data['avatar']);
                 $user->avatar = $avatarResponse['url'];
                 $user->save();
@@ -322,7 +293,13 @@ class UserService
             if (JWTAuth::parseToken()->check()) {
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
+
+            $code = CodeGenerate::where('email', $user->email)->first();
+            if ($code->exists()) {
+                $code->delete();
+            }
             $user->delete();
+
             Cache::forget('users');
             Cache::forget('user_' . $user->id);
             return ['status' => true];

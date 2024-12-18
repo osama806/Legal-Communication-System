@@ -3,11 +3,13 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\LawyerResource;
+use App\Models\CodeGenerate;
 use App\Models\User;
 use App\Notifications\LawyerToUserNotification;
 use App\Traits\PaginateResourceTrait;
 use Auth;
 use Cache;
+use Carbon\Carbon;
 use Hash;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -60,9 +62,26 @@ class LawyerService
      * @param array $data
      * @return array
      */
-    public function signupLawyer(array $data)
+    public function register(array $data)
     {
         try {
+            $code = CodeGenerate::where('email', $data['email'])->first();
+            if (!$code) {
+                return [
+                    'status' => false,
+                    'msg' => 'No verification code found for this email!',
+                    'code' => 404
+                ];
+            }
+            $date = Carbon::parse($code->expiration_date);
+            if ($date->isFuture() || !$code->is_verify) {
+                return [
+                    'status' => false,
+                    'msg' => 'This Email Not Verify!',
+                    'code' => 403
+                ];
+            }
+
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
@@ -83,8 +102,6 @@ class LawyerService
             } else {
                 throw new Exception("Role relationship not defined in Lawyer model.");
             }
-
-            // Mail::to($lawyer->email)->send(new VerifyCodeMail($lawyer));
 
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('lawyer')->attempt($credentials)) {
@@ -129,7 +146,7 @@ class LawyerService
 
             $lawyer->update($filteredData);
 
-            if ($data['avatar']) {
+            if (isset($data['avatar'])) {
                 $avatarResponse = $this->assetService->storeImage($data['avatar']);
                 $lawyer->avatar = $avatarResponse['url'];
                 $lawyer->save();
@@ -166,8 +183,11 @@ class LawyerService
             if (JWTAuth::parseToken()->check()) {
                 JWTAuth::invalidate(JWTAuth::getToken());
             }
+            $code = CodeGenerate::where('email', $lawyer->email)->first();
+            if ($code->exists()) {
+                $code->delete();
+            }
             $lawyer->delete();
-
             Cache::forget('lawyers');
             return ['status' => true];
 

@@ -44,7 +44,7 @@ class CodeGenerateService
                 return ['status' => true];
             } else {
                 $expiration_date = Carbon::parse($code->expiration_date);
-                if (!$expiration_date->isFuture()) {
+                if ($expiration_date->isPast()) {
                     $random_code = rand(100000, 999999);
                     $expired = Carbon::now()->addMinutes(5);
 
@@ -87,7 +87,7 @@ class CodeGenerateService
         }
 
         $expired_date = Carbon::parse($code->expiration_date);
-        if (!$expired_date->isFuture()) {
+        if ($expired_date->isPast()) {
             return [
                 'status' => false,
                 'msg' => 'Code is Expired Date!',

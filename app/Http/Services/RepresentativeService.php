@@ -3,9 +3,11 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\RepresentativeResource;
+use App\Models\CodeGenerate;
 use App\Notifications\RepresentativeToLawyerNotification;
 use App\Traits\PaginateResourceTrait;
 use Cache;
+use Carbon\Carbon;
 use Hash;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -61,24 +63,34 @@ class RepresentativeService
      * @param array $data
      * @return array
      */
-    public function signupRepresentative(array $data)
+    public function register(array $data)
     {
         try {
-            // تحميل الصورة باستخدام الخدمة
+            $code = CodeGenerate::where('email', $data['email'])->first();
+            if (!$code) {
+                return [
+                    'status' => false,
+                    'msg' => 'No verification code found for this email!',
+                    'code' => 404
+                ];
+            }
+            $date = Carbon::parse($code->expiration_date);
+            if ($date->isFuture() || !$code->is_verify) {
+                return [
+                    'status' => false,
+                    'msg' => 'This Email Not Verify!',
+                    'code' => 403
+                ];
+            }
+
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
-            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
             $plainPassword = $data['password'];
-
-            // تشفير كلمة المرور قبل إنشاء المستخدم
             $data['password'] = Hash::make($plainPassword);
             $data['avatar'] = $avatarResponse['url'];
-
-            // إنشاء المستخدم
             $representative = Representative::create($data);
 
-            // تعيين الدور
             if (method_exists($representative, 'role')) {
                 $representative->role()->create([
                     'name' => 'representative'
@@ -87,21 +99,13 @@ class RepresentativeService
                 throw new Exception("Role relationship not defined in Representative model.");
             }
 
-            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
-            // Mail::to($representative->email)->send(new VerifyCodeMail($representative));
-
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('representative')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');
             }
 
-            // توليد Refresh Token
             $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($representative);
-
             DB::commit();
-
-            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('representatives');
 
             return [
@@ -138,7 +142,7 @@ class RepresentativeService
             }
             $representative->update($filteredData);
 
-            if ($data['avatar']) {
+            if (isset($data['avatar'])) {
                 $avatarResponse = $this->assetService->storeImage($data['avatar']);
                 $representative->avatar = $avatarResponse['url'];
                 $representative->save();
@@ -174,6 +178,11 @@ class RepresentativeService
             // Check if the token is valid
             if (JWTAuth::parseToken()->check()) {
                 JWTAuth::invalidate(JWTAuth::getToken());
+            }
+
+            $code = CodeGenerate::where('email', $representative->email)->first();
+            if ($code->exists()) {
+                $code->delete();
             }
             $representative->delete();
             Cache::forget('representative_' . $representative->id);

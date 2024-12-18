@@ -23,7 +23,7 @@ class AdminService
      * @param array $data
      * @return array
      */
-    public function store(array $data)
+    public function register(array $data)
     {
         if (strpos($data['email'], '@admin') === false) {
             return [
@@ -45,7 +45,6 @@ class AdminService
                 'name' => 'admin'
             ]);
 
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $data['password']];
             if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 return [

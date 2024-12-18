@@ -3,10 +3,12 @@
 namespace App\Http\Services;
 
 use App\Http\Resources\UserResource;
+use App\Models\CodeGenerate;
 use App\Models\User;
 use App\Traits\PaginateResourceTrait;
 use Auth;
 use Cache;
+use Carbon\Carbon;
 use DB;
 use Exception;
 use Hash;
@@ -26,24 +28,35 @@ class EmployeeService
      * @param array $data
      * @return array
      */
-    public function signup(array $data)
+    public function register(array $data)
     {
         try {
-            // تحميل الصورة باستخدام الخدمة
+            $code = CodeGenerate::where('email', $data['email'])->first();
+            if (!$code) {
+                return [
+                    'status' => false,
+                    'msg' => 'No verification code found for this email!',
+                    'code' => 404
+                ];
+            }
+            $date = Carbon::parse($code->expiration_date);
+            if ($date->isFuture() || !$code->is_verify) {
+                return [
+                    'status' => false,
+                    'msg' => 'This Email Not Verify!',
+                    'code' => 403
+                ];
+            }
+
             $avatarResponse = $this->assetService->storeImage($data['avatar']);
             DB::beginTransaction();
 
-            // حفظ كلمة المرور الأصلية للاستخدام لاحقًا في محاولة تسجيل الدخول
             $plainPassword = $data['password'];
-
-            // تشفير كلمة المرور قبل إنشاء المستخدم
             $data['password'] = Hash::make($plainPassword);
             $data['avatar'] = $avatarResponse['url'];
 
-            // إنشاء المستخدم
             $user = User::create($data);
 
-            // تعيين الدور
             if (method_exists($user, 'role')) {
                 $user->role()->create([
                     'name' => 'employee'
@@ -52,21 +65,13 @@ class EmployeeService
                 throw new Exception("Role relationship not defined in User model.");
             }
 
-            // إرسال بريد إلكتروني للتحقق (معلق في الكود)
-            // Mail::to($user->email)->send(new VerifyCodeMail($user));
-
-            // تسجيل الدخول وتوليد التوكن
             $credentials = ['email' => $data['email'], 'password' => $plainPassword]; // استخدم كلمة المرور الأصلية هنا
             if (!$access_token = Auth::guard('api')->attempt($credentials)) {
                 throw new Exception('Failed to generate token');
             }
 
-            // توليد Refresh Token
             $refresh_token = JWTAuth::customClaims(['refresh' => true])->fromUser($user);
-
             DB::commit();
-
-            // إزالة الكاش (إذا تم تخزين المستخدمين في الكاش)
             Cache::forget('employees');
             return [
                 'status' => true,

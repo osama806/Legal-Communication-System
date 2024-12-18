@@ -26,9 +26,9 @@ class AdminController extends Controller
      * @param \App\Http\Requests\Admin\RegisterAdminRequest $registerRequest
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function signup(RegisterAdminRequest $registerRequest)
+    public function store(RegisterAdminRequest $registerRequest)
     {
-        $response = $this->adminService->store($registerRequest->validated());
+        $response = $this->adminService->register($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'admin')
             : $this->error($response['msg'], $response['code']);

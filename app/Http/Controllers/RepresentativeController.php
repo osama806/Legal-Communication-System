@@ -45,7 +45,7 @@ class RepresentativeController extends Controller
      */
     public function store(RegisterRepresentativeRequest $request)
     {
-        $response = $this->representativeService->signupRepresentative($request->validated());
+        $response = $this->representativeService->register($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'representative')
             : $this->error($response['msg'], $response['code']);

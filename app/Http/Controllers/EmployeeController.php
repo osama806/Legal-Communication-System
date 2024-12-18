@@ -42,7 +42,7 @@ class EmployeeController extends Controller
      */
     public function store(RegisterEmployeeRequest $registerRequest)
     {
-        $response = $this->employeeService->signup($registerRequest->validated());
+        $response = $this->employeeService->register($registerRequest->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'employee')
             : $this->error($response['msg'], $response['code']);

@@ -81,12 +81,12 @@ class UserController extends Controller
 
     /**
      * Create new user
-     * @param \App\Http\Requests\User\RegisterUserRequest $registerUserRequest
+     * @param \App\Http\Requests\User\RegisterUserRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function store(RegisterUserRequest $registerUserRequest)
+    public function store(RegisterUserRequest $request)
     {
-        $response = $this->userService->register($registerUserRequest->validated());
+        $response = $this->userService->register($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
             : $this->error($response['msg'], $response['code']);
@@ -158,12 +158,12 @@ class UserController extends Controller
 
     /**
      * Create new user by admin
-     * @param \App\Http\Requests\Admin\RegisterUserRequest $registerUserRequest
+     * @param \App\Http\Requests\Admin\RegisterUserRequest $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function registerUser(RegisterUserRequest $registerUserRequest)
+    public function registerUser(RegisterUserRequest $request)
     {
-        $response = $this->userService->signupUser($registerUserRequest->validated());
+        $response = $this->userService->register($request->validated());
         return $response['status']
             ? $this->tokenResponse($response['access_token'], $response['refresh_token'], 'user')
             : $this->error($response['msg'], $response['code']);
