@@ -19,8 +19,6 @@ return new class extends Migration {
             $table->foreignId('representative_id')->nullable()->constrained('representatives')->cascadeOnDelete();
             $table->string('place_of_issue')->nullable();
             $table->string('type')->nullable();
-            $table->text('authorizations')->nullable();
-            $table->text('exceptions')->nullable();
             $table->string('cause');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->boolean('is_active')->default(false);
