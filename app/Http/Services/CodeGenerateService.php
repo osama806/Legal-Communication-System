@@ -20,7 +20,7 @@ class CodeGenerateService
     public function generate(array $data)
     {
         $random_code = rand(100000, 999999);
-        $expired = Carbon::now()->addMinutes(5);
+        $expired = Carbon::now()->addMinutes(10);
 
         $email = $this->checkEmail($data['email']);
         if (!$email) {
@@ -44,9 +44,9 @@ class CodeGenerateService
                 return ['status' => true];
             } else {
                 $expiration_date = Carbon::parse($code->expiration_date);
-                if ($expiration_date->isPast()) {
+                if (!$expiration_date->isFuture()) {
                     $random_code = rand(100000, 999999);
-                    $expired = Carbon::now()->addMinutes(5);
+                    $expired = Carbon::now()->addMinutes(10);
 
                     $code->code = $random_code;
                     $code->expiration_date = $expired;
@@ -87,7 +87,7 @@ class CodeGenerateService
         }
 
         $expired_date = Carbon::parse($code->expiration_date);
-        if ($expired_date->isPast()) {
+        if (!$expired_date->isFuture()) {
             return [
                 'status' => false,
                 'msg' => 'Code is Expired Date!',

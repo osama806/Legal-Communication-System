@@ -10,9 +10,10 @@
 
 <body>
     <h1>Dear {{ $email }},</h1>
-    <p>Using this code to confirm your email</p>
-    <h3 style="text-align: center">{{ $code }}</h3>
-    <span>Don't share this code with anyone</span>
+    <h2>Using this code to confirm your email in Legal Communication System</h2>
+    <h2 style="text-align: center">{{ $code }}</h2>
+    <h3>Don't share this code with anyone</h3>
+    <h3>Thank You;</h3>
 </body>
 
 </html>
