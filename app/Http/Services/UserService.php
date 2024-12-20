@@ -53,12 +53,19 @@ class UserService
                 ];
             }
 
-            $avatarResponse = $this->assetService->storeImage($data['avatar']);
+            $avatarURL = $this->assetService->storeImage($data['avatar']);
+            if (!$avatarURL['status']) {
+                return [
+                    'status' => false,
+                    'msg' => $avatarURL['msg'],
+                    'code' => $avatarURL['code']
+                ];
+            }
             DB::beginTransaction();
 
             $plainPassword = $data['password'];
             $data['password'] = Hash::make($plainPassword);
-            $data['avatar'] = $avatarResponse['url'];
+            $data['avatar'] = $avatarURL['url'];
             $user = User::create($data);
 
             if (method_exists($user, 'role')) {
@@ -157,8 +164,15 @@ class UserService
             $user->update($filteredData);
 
             if (isset($data['avatar'])) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $user->avatar = $avatarResponse['url'];
+                $avatarURL = $this->assetService->storeImage($data['avatar']);
+                if (!$avatarURL['status']) {
+                    return [
+                        'status' => false,
+                        'msg' => $avatarURL['msg'],
+                        'code' => $avatarURL['code']
+                    ];
+                }
+                $user->avatar = $avatarURL['url'];
                 $user->save();
             }
 
@@ -261,8 +275,15 @@ class UserService
             $user->update($filteredData);
 
             if (isset($data['avatar'])) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $user->avatar = $avatarResponse['url'];
+                $avatarURL = $this->assetService->storeImage($data['avatar']);
+                if (!$avatarURL['status']) {
+                    return [
+                        'status' => false,
+                        'msg' => $avatarURL['msg'],
+                        'code' => $avatarURL['code']
+                    ];
+                }
+                $user->avatar = $avatarURL['url'];
                 $user->save();
             }
             Cache::forget('users');

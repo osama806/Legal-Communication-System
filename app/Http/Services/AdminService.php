@@ -25,20 +25,20 @@ class AdminService
      */
     public function register(array $data)
     {
-        if (strpos($data['email'], '@admin') === false) {
+        $avatarURL = $this->assetService->storeImage($data['avatar']);
+        if (!$avatarURL['status']) {
             return [
                 'status' => false,
-                'msg' => 'Email address must contains mark @admin',
-                'code' => 400
+                'msg' => $avatarURL['msg'],
+                'code' => $avatarURL['code']
             ];
         }
-        $avatarResponse = $this->assetService->storeImage($data['avatar']);
 
         try {
             DB::beginTransaction();
             $admin = User::create($data);
             $admin->password = Hash::make($data["password"]);
-            $admin->avatar = $avatarResponse['url'];
+            $admin->avatar = $avatarURL['url'];
             $admin->save();
 
             $admin->role()->create([

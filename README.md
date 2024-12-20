@@ -58,7 +58,7 @@ There is a recommendation system that shows users highly rated recommended lawye
 -   Update issue status
 -   Choose if issue is active or in-active
 
-6. Chat
+6. Conversation
 
 -   Open secure connection between user and lawyer
 -   Real time connection

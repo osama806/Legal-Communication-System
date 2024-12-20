@@ -82,12 +82,19 @@ class LawyerService
                 ];
             }
 
-            $avatarResponse = $this->assetService->storeImage($data['avatar']);
+            $avatarURL = $this->assetService->storeImage($data['avatar']);
+            if (!$avatarURL['status']) {
+                return [
+                    'status' => false,
+                    'msg' => $avatarURL['msg'],
+                    'code' => $avatarURL['code']
+                ];
+            }
             DB::beginTransaction();
 
             $plainPassword = $data['password'];
             $data['password'] = Hash::make($plainPassword);
-            $data['avatar'] = $avatarResponse['url'];
+            $data['avatar'] = $avatarURL['url'];
 
             $lawyer = Lawyer::create($data);
             $lawyer->specializations()->attach($data['specialization_Ids'], [
@@ -147,8 +154,15 @@ class LawyerService
             $lawyer->update($filteredData);
 
             if (isset($data['avatar'])) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $lawyer->avatar = $avatarResponse['url'];
+                $avatarURL = $this->assetService->storeImage($data['avatar']);
+                if (!$avatarURL['status']) {
+                    return [
+                        'status' => false,
+                        'msg' => $avatarURL['msg'],
+                        'code' => $avatarURL['code']
+                    ];
+                }
+                $lawyer->avatar = $avatarURL['url'];
                 $lawyer->save();
             }
 

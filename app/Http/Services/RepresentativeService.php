@@ -83,12 +83,19 @@ class RepresentativeService
                 ];
             }
 
-            $avatarResponse = $this->assetService->storeImage($data['avatar']);
+            $avatarURL = $this->assetService->storeImage($data['avatar']);
+            if (!$avatarURL['status']) {
+                return [
+                    'status' => false,
+                    'msg' => $avatarURL['msg'],
+                    'code' => $avatarURL['code']
+                ];
+            }
             DB::beginTransaction();
 
             $plainPassword = $data['password'];
             $data['password'] = Hash::make($plainPassword);
-            $data['avatar'] = $avatarResponse['url'];
+            $data['avatar'] = $avatarURL['url'];
             $representative = Representative::create($data);
 
             if (method_exists($representative, 'role')) {
@@ -143,8 +150,15 @@ class RepresentativeService
             $representative->update($filteredData);
 
             if (isset($data['avatar'])) {
-                $avatarResponse = $this->assetService->storeImage($data['avatar']);
-                $representative->avatar = $avatarResponse['url'];
+                $avatarURL = $this->assetService->storeImage($data['avatar']);
+                if (!$avatarURL['status']) {
+                    return [
+                        'status' => false,
+                        'msg' => $avatarURL['msg'],
+                        'code' => $avatarURL['code']
+                    ];
+                }
+                $representative->avatar = $avatarURL['url'];
                 $representative->save();
             }
 

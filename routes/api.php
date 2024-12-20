@@ -5,12 +5,14 @@ use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorizationController;
 use App\Http\Controllers\CodeGenerateController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\CourtController;
 use App\Http\Controllers\CourtRoomController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExceptionController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LawyerController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SpecializationController;
@@ -102,6 +104,10 @@ Route::prefix("v1")->group(function () {
         Route::get('get-lawyers/{id}', [LawyerController::class, 'show']);
         Route::get('get-issues', [IssueController::class, 'index']);
         Route::get('get-issues/{id}', [IssueController::class, 'show']);
+        Route::get('chats', [ConversationController::class, 'getUserConversations']);
+        Route::post('chats', [ConversationController::class, 'storeByUser']);
+        Route::get('chats/{id}', [MessageController::class, 'index']);
+        Route::post('chats/{id}/send-message', [MessageController::class, 'storeByUser']);
     });
 
     Route::prefix("lawyers")->group(function () {
@@ -127,6 +133,10 @@ Route::prefix("v1")->group(function () {
             Route::apiResource('all-exceptions', ExceptionController::class)->only(['index', 'show']);
             Route::get('get-agencies', [AgencyController::class, 'getList']);
             Route::get('get-agencies/{id}', [AgencyController::class, 'showOne']);
+            Route::get('chats', [ConversationController::class, 'getLawyerConversations']);
+            Route::post('chats', [ConversationController::class, 'storeByLawyer']);
+            Route::get('chats/{id}', [MessageController::class, 'index']);
+            Route::post('chats/{id}/send-message', [MessageController::class, 'storeByLawyer']);
         });
     });
 

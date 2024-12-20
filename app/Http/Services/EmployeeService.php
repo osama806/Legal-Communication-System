@@ -48,12 +48,19 @@ class EmployeeService
                 ];
             }
 
-            $avatarResponse = $this->assetService->storeImage($data['avatar']);
+            $avatarURL = $this->assetService->storeImage($data['avatar']);
+            if (!$avatarURL['status']) {
+                return [
+                    'status' => false,
+                    'msg' => $avatarURL['msg'],
+                    'code' => $avatarURL['code']
+                ];
+            }
             DB::beginTransaction();
 
             $plainPassword = $data['password'];
             $data['password'] = Hash::make($plainPassword);
-            $data['avatar'] = $avatarResponse['url'];
+            $data['avatar'] = $avatarURL['url'];
 
             $user = User::create($data);
 

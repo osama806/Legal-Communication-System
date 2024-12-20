@@ -4,7 +4,7 @@ namespace App\Traits;
 
 use App\Models\Agency;
 use App\Models\Attachment;
-use App\Models\Chat;
+use App\Models\Conversation;
 use App\Models\Issue;
 use App\Models\Message;
 use App\Models\Rate;
@@ -68,12 +68,12 @@ trait AuthenticatableUser
     }
 
     /**
-     * Defines a one-to-many relationship with the Chat model.
+     * Defines a one-to-many relationship with the Conversation model.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function chats()
+    public function conversations()
     {
-        return $this->hasMany(Chat::class);
+        return $this->hasMany(Conversation::class);
     }
 
     /**

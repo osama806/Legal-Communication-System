@@ -6,17 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Crypt;
 
 class Message extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        "chat_id",
+        "conversation_id",
         "messagable_type",
         "messagable_id",
-        "body",
-        "seen",
+        "content",
     ];
 
     /**
@@ -36,5 +36,25 @@ class Message extends Model
     {
         return $this->morphOne(Attachment::class, 'relatedable');
     }
+
+     /**
+      * Encryption messages before save in storage
+      * @param mixed $value
+      * @return void
+      */
+     public function setContentAttribute($value)
+     {
+         $this->attributes['content'] = Crypt::encryptString($value);
+     }
+
+     /**
+      * Decryption messages when display in conversation
+      * @param mixed $value
+      * @return string
+      */
+     public function getContentAttribute($value)
+     {
+         return Crypt::decryptString($value);
+     }
 
 }
