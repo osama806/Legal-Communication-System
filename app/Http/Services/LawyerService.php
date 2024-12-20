@@ -2,19 +2,21 @@
 
 namespace App\Http\Services;
 
+use App\Events\Agency\Lawyer\ApproveNotificationEvent;
+use App\Events\Agency\Lawyer\RejectNotificationEvent;
+use Auth;
+use Cache;
+use Hash;
+use Exception;
+use Log;
+use Notification;
 use App\Http\Resources\LawyerResource;
 use App\Models\CodeGenerate;
 use App\Models\User;
 use App\Notifications\LawyerToUserNotification;
 use App\Traits\PaginateResourceTrait;
-use Auth;
-use Cache;
 use Carbon\Carbon;
-use Hash;
 use Illuminate\Support\Facades\DB;
-use Exception;
-use Log;
-use Notification;
 use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Models\Representative;
@@ -268,6 +270,7 @@ class LawyerService
             ]);
             $agency->save();
 
+            event(new ApproveNotificationEvent($agency));
             Notification::send($representative, new LawyerToRepresentativeNotification($agency));
             DB::commit();
             Cache::forget('agency_' . $agency->id);
@@ -331,6 +334,7 @@ class LawyerService
             $agency->status = 'rejected';
             $agency->save();
 
+            event(new RejectNotificationEvent($agency));
             Notification::send($user, new LawyerToUserNotification($agency));
             DB::commit();
             Cache::forget('agency_' . $agency->id);

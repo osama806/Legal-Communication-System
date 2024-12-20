@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\Events\Agency\User\RequestNotificationEvent;
 use App\Http\Resources\AgencyResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -77,6 +78,7 @@ class AgencyService
             ]);
 
             if ($agency->wasRecentlyCreated) {
+                event(new RequestNotificationEvent($agency));
                 Notification::send($lawyer, new UserToLawyerNotification($agency));
                 DB::commit();
 

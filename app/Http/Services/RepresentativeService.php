@@ -2,22 +2,25 @@
 
 namespace App\Http\Services;
 
-use App\Http\Resources\RepresentativeResource;
-use App\Models\CodeGenerate;
-use App\Notifications\RepresentativeToLawyerNotification;
-use App\Traits\PaginateResourceTrait;
 use Cache;
-use Carbon\Carbon;
 use Hash;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Log;
 use Auth;
 use Exception;
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Agency;
 use App\Models\Lawyer;
 use App\Models\Representative;
+use App\Events\Agency\Representative\Approved\ALawyerNotificationEvent;
+use App\Events\Agency\Representative\Approved\AUserNotificationEvent;
+use App\Events\Agency\Representative\Rejected\RLawyerNotificationEvent;
+use App\Events\Agency\Representative\Rejected\RUserNotificationEvent;
+use App\Http\Resources\RepresentativeResource;
+use App\Models\CodeGenerate;
+use App\Notifications\RepresentativeToLawyerNotification;
+use App\Traits\PaginateResourceTrait;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\RepresentativeToUserNotification;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -268,12 +271,14 @@ class RepresentativeService
             $agency->place_of_issue = $data['place_of_issue'];
             $agency->status = 'approved';
             $agency->is_active = true;
-
             $agency->save();
-            Notification::send($user, new RepresentativeToUserNotification($agency));
-            Notification::send($lawyer, new RepresentativeToLawyerNotification($agency));
-            DB::commit();
 
+            event(new AUserNotificationEvent($agency));
+            Notification::send($user, new RepresentativeToUserNotification($agency));
+            event(new ALawyerNotificationEvent($agency));
+            Notification::send($lawyer, new RepresentativeToLawyerNotification($agency));
+
+            DB::commit();
             Cache::forget('agency_' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
@@ -339,10 +344,12 @@ class RepresentativeService
             $agency->is_active = false;
             $agency->save();
 
+            event(new RUserNotificationEvent($agency));
             Notification::send($user, new RepresentativeToUserNotification($agency));
+            event(new RLawyerNotificationEvent($agency));
             Notification::send($lawyer, new RepresentativeToLawyerNotification($agency));
-            DB::commit();
 
+            DB::commit();
             Cache::forget('agency_' . $agency->id);
             return ['status' => true];
         } catch (Exception $e) {
